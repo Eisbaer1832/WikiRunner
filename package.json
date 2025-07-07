@@ -17,7 +17,11 @@
   },
   "homepage": "https://github.com/Eisbaer1832/WikiRunner#readme",
   "dependencies": {
+    "axios": "^1.10.0",
+    "cheerio": "^1.1.0",
     "eiows": "^8.2.0",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
     "socket.io": "^4.8.1"
   }
 }
