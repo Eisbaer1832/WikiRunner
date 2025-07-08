@@ -1,30 +1,16 @@
 const express = require('express')
-const path = require('path')
-const fs = require('fs');
-const url = require('url');
 const bodyParser = require('body-parser');
-const { json } = require('express');
-const { createServer } = require('node:http');
-const { join } = require('node:path');
 const favicon = require('serve-favicon');
 const { Server } = require("socket.io");
-const eiows = require("eiows");
-const http = require('http');
 const $ = require('jquery');
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const axios = require('axios');
 const cheerio = require('cheerio');
-
-let erledigtCounter = 0
-let BestellungCounter = 0
-
-
-//http
 const app = express();
 
-//websocket
-const io = new Server(9877, { cors: { origin: '*', credentials: true }});
 
+//https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
+
+const io = new Server(9877, { cors: { origin: '*', credentials: true }});
 const port = 9876;
 
 
@@ -44,20 +30,14 @@ app.listen(port, () => {console.log(`App listening on port ${port}!`)});
 io.on("connection", (socket) => {
   console.log("-----------------------");
   console.log("LOGGING FOR SCOKET: " + socket.id);
-  io.emit("orders", {"orderItems": orders, "done": erledigtCounter})
 
   socket.on('ordering', (item, username) => {
-    orders[0].push(username)
-    orders[1].push(item)
     console.log(`User ${username} ordered: ${item}`);
-    io.emit("orders", {"orderItems": orders, "done": erledigtCounter})
+    io.emit("orders", {"orderItems": ""})
   }); 
 
   socket.on('finish', (item) => {
-    orders[0].splice(item, 1)
-    orders[1].splice(item, 1)
-    erledigtCounter++
-    io.emit("orders", {"orderItems": orders, "done": erledigtCounter})
+    io.emit("orders", {"orderItems": ""})
     
   }); 
 });
