@@ -35,15 +35,11 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.use('/public',express.static('public'));
-
 app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __dirname })});
-  
-app.get('/mix', (_, res) => {res.sendFile('/public/html/results.html', {root: __dirname })});
-
+app.get('/results', (_, res) => {res.sendFile('/public/html/results.html', {root: __dirname })});
 app.listen(port, () => {console.log(`App listening on port ${port}!`)});
 
 
-let orders = [[],[]];
 
 io.on("connection", (socket) => {
   console.log("-----------------------");
@@ -76,21 +72,23 @@ app.get('/proxy', async (req, res) => {
     const $ = cheerio.load(response.data);
     const baseUrl = new URL(targetUrl);
 
-    // Rewrite links to CSS/JS/imgs
-    $('link[href], script[src], img[src]').each((_, el) => {
-      const attr = el.name === 'link' || el.name === 'img' ? 'href' : 'src';
-      const original = $(el).attr(attr);
-      if (original && !original.startsWith('data:')) {
-        const absolute = new URL(original, baseUrl).toString();
-        $(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(absolute)}`);
-      }
+    $('link[href], img[src]').each((_, el) => {
+      	const attr = el.name === 'link' || el.name === 'img' ? 'href' : 'src';
+      	const original = $(el).attr(attr);
+		
+		const absolute = new URL(original, baseUrl).toString()
+		console.log(absolute)
+		 $(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(absolute)}`);
     });
 
+
     $('a').each(function () {
-    var $this = $(this),
-        href = $this.attr('href');
-    $this.attr('href', "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/" + href);
-})
+		let href = $(this).attr('href');
+		if (href.startsWith('/w')) {
+     		href = "https://de.wikipedia.org" + href
+		}
+		$(this).attr('href', "http://127.0.0.1:9876/proxy?url=" + href);
+	})
 
     res.send($.html());
   } catch (err) {
@@ -99,16 +97,16 @@ app.get('/proxy', async (req, res) => {
 });
 // Asset Proxy (CSS, JS, images)
 app.get('/proxy/resource', async (req, res) => {
-  const assetUrl = req.query.url;
-  if (!assetUrl) return res.status(400).send('Missing ?url param');
-  try {
-    const response = await axios.get(assetUrl, {
-      responseType: 'arraybuffer', // handle binary data like images
-    });
+	const assetUrl = req.query.url;
+	if (!assetUrl) return res.status(400).send('Missing ?url param');
+  		try {
+    		const response = await axios.get(assetUrl, {
+      		responseType: 'arraybuffer', // handle binary data like images
+    	});
 
-    res.set(response.headers); // forward original headers (content-type, etc)
-    res.send(response.data);
-  } catch (err) {
-    res.status(500).send('Proxy resource error');
+			res.set(response.headers); // forward original headers (content-type, etc)
+			res.send(response.data);
+  		} catch (err) {
+    	res.status(500).send('Proxy resource error');
   }
 });
