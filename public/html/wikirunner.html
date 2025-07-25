@@ -11,11 +11,76 @@
     <!--START navbar-->
     <nav class="navbar is-transparent" role="navigation" aria-label="dropdown navigation">
         <a class="navbar-item"><h1>🏃🏻‍➡️ WikiRunner</h1></a>
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <button class="button is-danger is-dark" onclick="resetUName()">Nutzernamen zurücksetzen</button>
+            </div>
+        </div>
     </nav>
-    <iframe id="wikiFrame" class="wikipedia" src="http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Haus" title="W3Schools Free Online Web Tutorials"></iframe> 
+    <iframe id="wikiFrame" class="wikipedia" src="http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/" title="W3Schools Free Online Web Tutorials"></iframe> 
+
+    <div id="waitingScreen" class="card box m-3">
+    <div class="card-content">
+        <p class="title" id="waitingText">
+            Das Spiel ist noch nicht gestartet, spiele so lange dieses Spiel hier:
+        </p>
+    </div>
+    </div>
+
+    <div id="statBlock">
+        <nav class="level">
+        <div class="level-item has-text-centered">
+            <div>
+            <p class="heading">Tweets</p>
+            <p class="title">3,456</p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+            <p class="heading">Following</p>
+            <p class="title">123</p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+            <p class="heading">Followers</p>
+            <p class="title">456K</p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+            <p class="heading">Likes</p>
+            <p class="title">789</p>
+            </div>
+        </div>
+        </nav>
 
 
+        <article class="panel is-info m-3">
+        <p class="panel-heading">Liste</p>
 
+
+        </article>
+    </div>
+
+    <!--START Login modal-->
+    <div id="login" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <div class="box">
+        <h2>Gib deinen Nutzernamen ein</h2>
+        <div class="field is-grouped">
+            <p class="control">
+                <input id="loginInput" class="input is-normal"type="text"placeholder="Nutzername"/>
+            </p>
+            <p class="control">
+                <button class="button is-primary" onclick="closeModal(document.getElementById('login'))">Fertig</button>
+            </p>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!--END Login modal-->
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="/public/js/socket.io.js" ></script>

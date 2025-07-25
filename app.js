@@ -14,6 +14,13 @@ const io = new Server(9877, { cors: { origin: '*', credentials: true }});
 const port = 9876;
 
 
+let startTime = 0
+let gameRunning = false
+let finishedUsers = []
+let timeStamps = []
+
+let startURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Haus"
+let endURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Baracke"
 //app.use(favicon(path.join(__dirname, '/', 'favicon.ico')));
 
 app.use(bodyParser.urlencoded({
@@ -28,17 +35,25 @@ app.listen(port, () => {console.log(`App listening on port ${port}!`)});
 
 
 io.on("connection", (socket) => {
-  console.log("-----------------------");
-  console.log("LOGGING FOR SCOKET: " + socket.id);
+	
 
-  socket.on('ordering', (item, username) => {
-    console.log(`User ${username} ordered: ${item}`);
-    io.emit("orders", {"orderItems": ""})
-  }); 
+	if (gameRunning) {
+		io.emit("starting", {"startURL": startURL, "endURL": endURL})
+	}
 
-  socket.on('finish', (item) => {
-    io.emit("orders", {"orderItems": ""})
-    
+	socket.on("startGame", () => {
+		io.emit("starting", {"startURL": startURL, "endURL": endURL})
+		startTime = Date.now();
+		gameRunning = true;
+	})
+
+	socket.on('UserFinished', (user) => {
+		console.log(user + " has finished")
+		finishedUsers.push[user]
+		const ms = Date.now() - startTime;
+		timeStamps.push(ms)
+
+		io.emit("orders", {"orderItems": ""})
   }); 
 });
 
@@ -55,10 +70,7 @@ app.get('/proxy', async (req, res) => {
     $('link[href], img[src]').each((_, el) => {
       	const attr = el.name === 'link' || el.name === 'img' ? 'href' : 'src';
       	const original = $(el).attr(attr);
-		
-		const absolute = new URL(original, baseUrl).toString()
-		console.log(absolute)
-		 $(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(absolute)}`);
+		$(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(new URL(original, baseUrl).toString())}`);
     });
 
 
