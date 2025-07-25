@@ -32,16 +32,40 @@ app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __
 app.get('/results', (_, res) => {res.sendFile('/public/html/results.html', {root: __dirname })});
 app.listen(port, () => {console.log(`App listening on port ${port}!`)});
 
+function fetchRandomArticle() {
+	const URL = "https://de.wikipedia.org/api/rest_v1/page/random/summary"
+	fetch(URL)
+		.then(response => {
+			if (!response.ok) {
+			throw new Error('Network response was not ok');
+			}
+			return response.json();
+		})
+		.then(data => {
+			startURL = data.content_urls.desktop.page
+			
+		})
+		.catch(error => {
+			console.error('Error:', error);
+		});
+}
+fetchRandomArticle()
 
 
 io.on("connection", (socket) => {
-	
+	io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
+
 
 	if (gameRunning) {
 		io.emit("starting", {"startURL": startURL, "endURL": endURL})
 	}
 
 	socket.on("startGame", () => {
+		finishedUsers = []
+		timeStamps = []
+
+		fetchRandomArticle()
+
 		io.emit("starting", {"startURL": startURL, "endURL": endURL})
 		startTime = Date.now();
 		gameRunning = true;
@@ -49,11 +73,12 @@ io.on("connection", (socket) => {
 
 	socket.on('UserFinished', (user) => {
 		console.log(user + " has finished")
-		finishedUsers.push[user]
+		finishedUsers.push(user)
+		console.log(finishedUsers)
 		const ms = Date.now() - startTime;
 		timeStamps.push(ms)
 
-		io.emit("orders", {"orderItems": ""})
+		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
   }); 
 });
 

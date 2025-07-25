@@ -14,8 +14,11 @@ socket.on("starting", ({startURL, endURL}) => {
 		setupIframe(startURL)
 		gameStarted()
 	}
+});
 
-	
+
+socket.on("updateScoreBoard", ({users, times}) => {
+	displayScores(users, times)
 });
 
 function remoteFinished() {
@@ -24,5 +27,6 @@ function remoteFinished() {
 
 
 function startGame() {
+	localStorage.setItem("finished", false)
 	socket.emit("startGame")
 }
