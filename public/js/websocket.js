@@ -10,8 +10,12 @@ socket.on("starting", ({startURL, endURL}) => {
 		console.log("allready finished")
 		localFinished()
 	}else{
-		localStorage.setItem("target", endURL)
+		console.log(startURL)
 		setupIframe(startURL)
+
+		localStorage.setItem("target", endURL)
+		const goalText = endURL.split("/")
+		document.getElementById("targetLabel").innerHTML = "🏁" + "<strong>" + goalText[goalText.length - 1]  + "</strong>" + "🏁"
 		gameStarted()
 	}
 });

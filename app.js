@@ -19,6 +19,9 @@ let gameRunning = false
 let finishedUsers = []
 let timeStamps = []
 
+let hopCounter = 0
+let maxHops = 3
+
 let startURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Haus"
 let endURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Baracke"
 //app.use(favicon(path.join(__dirname, '/', 'favicon.ico')));
@@ -33,28 +36,82 @@ app.get('/results', (_, res) => {res.sendFile('/public/html/results.html', {root
 app.listen(port, () => {console.log(`App listening on port ${port}!`)});
 
 function fetchRandomArticle() {
-	const URL = "https://de.wikipedia.org/api/rest_v1/page/random/summary"
-	fetch(URL)
-		.then(response => {
-			if (!response.ok) {
-			throw new Error('Network response was not ok');
-			}
-			return response.json();
-		})
-		.then(data => {
-			startURL = data.content_urls.desktop.page
-			
-		})
-		.catch(error => {
-			console.error('Error:', error);
-		});
+	return new Promise((resolve, reject) => {
+		const URL = "https://de.wikipedia.org/api/rest_v1/page/random/summary"
+		fetch(URL)
+			.then(response => {
+				if (!response.ok) {
+				throw new Error('Network response was not ok');
+				}
+				return response.json();
+			})
+			.then(data => {
+				startURL = data.content_urls.desktop.page
+				resolve(startURL)
+			})
+			.catch(err => {
+				console.error("Error fetching random article:", err);
+				reject(err);
+			});
+	});
 }
-fetchRandomArticle()
+
+function fetchRelatedGoalArticle(URL) {
+	return new Promise((resolve, reject) => {
+		let articles = [];
+		console.log("URL: " + URL);
+		
+		fetch(URL)
+			.then(res => res.text())
+			.then(html => {
+				const $ = cheerio.load(html);
+				const element = $(".mw-page-container-inner").first();
+
+				element.find('a').each((i, link) => {
+					const href = $(link).attr('href');
+					if (
+						href &&
+						!href.includes("%") &&
+						!href.includes(".jpg") &&
+						!href.includes(".svg") &&
+						!href.includes("Hilfe:") &&
+						!href.includes("ISBN") &&
+						href.includes("/wiki/") &&
+						href.includes("de.wikipedia.org")
+					) {
+						articles.push(href);
+					}
+				});
+
+				if (articles.length > 0) {
+					const rand = Math.floor(Math.random() * articles.length);
+					const article = articles[rand];
+
+					console.log(`Found ${articles.length} articles`);
+
+					if (hopCounter < maxHops) {
+						hopCounter++;
+						fetchRelatedGoalArticle(article).then(resolve).catch(reject);
+					} else {
+						endURL = article;
+						resolve(endURL);
+					}
+				} else {
+						endURL = URL
+						resolve(endURL);
+				}
+			})
+			.catch(err => {
+				console.error("Fetch error:", err);
+				reject(err);
+			});
+	});
+}
+
 
 
 io.on("connection", (socket) => {
 	io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
-
 
 	if (gameRunning) {
 		io.emit("starting", {"startURL": startURL, "endURL": endURL})
@@ -65,10 +122,19 @@ io.on("connection", (socket) => {
 		timeStamps = []
 
 		fetchRandomArticle()
-
-		io.emit("starting", {"startURL": startURL, "endURL": endURL})
-		startTime = Date.now();
-		gameRunning = true;
+		.then(() => {
+			startURL = "http://127.0.0.1:9876/proxy?url=" + startURL
+			fetchRelatedGoalArticle(startURL)
+			.then(() => {
+				console.log(endURL)
+				io.emit("starting", {"startURL": startURL, "endURL": endURL})
+				startTime = Date.now();
+				gameRunning = true;
+			})
+		})
+		.catch(err => {
+			console.error("Error starting game:", err);
+		});
 	})
 
 	socket.on('UserFinished', (user) => {
@@ -77,7 +143,7 @@ io.on("connection", (socket) => {
 		console.log(finishedUsers)
 		const ms = Date.now() - startTime;
 		timeStamps.push(ms)
-
+		
 		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
   }); 
 });

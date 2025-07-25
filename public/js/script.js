@@ -8,7 +8,6 @@ const targetLabel = document.getElementById("targetLabel")
 localStorage.removeItem("URLtoCheck")
 const goalText = localStorage.getItem("target").split('/');
 
-
 function openModal($el) {
     $el.classList.add('is-active');
 }
@@ -33,7 +32,7 @@ function gameStarted() {
 
 function setupIframe(startURL) {
 	wikiFrame.src = startURL
-	console.log(wikiFrame.src)
+	console.log(wikiFrame.src);
 }
 
 function localFinished() {
@@ -59,10 +58,10 @@ function displayScores(names, times) {
 	});
 }
 
+
 function main() {
 	wikiFrame.classList.add("disabled")
 	statBlock.classList.add("disabled")
-	targetLabel.innerHTML = "🏁" + "<strong>" + goalText[goalText.length - 1]  + "</strong>" + "🏁"
 
 	if (!username) {
 		console.log("uname undefined")
@@ -70,14 +69,9 @@ function main() {
 
 	}
 
-
-	url = wikiFrame.src
-
-
 	$("#wikiFrame").on("load", function () {
 		$("#wikiFrame").contents().find("a").attr('onClick', '{ localStorage.setItem("URLtoCheck", this.href)}');
 	});
-
 
 	window.addEventListener('storage', (event) => {
 		if (localStorage.getItem(event.key) == localStorage.getItem("target"), event.key == "URLtoCheck") {
