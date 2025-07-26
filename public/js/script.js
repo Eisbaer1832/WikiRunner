@@ -68,7 +68,6 @@ function localFinished() {
 }
 
 function displayScores(names, times, linksClickedList) {
-	console.log(linksClickedList)
 	document.getElementById("statsInsert").innerHTML = ""
 	names.forEach((name, i) => {
 		$('#statsInsert').append("" +
@@ -79,7 +78,7 @@ function displayScores(names, times, linksClickedList) {
     		"<span class='icon'><i class='fas fa-user' aria-hidden='true'></i></span>" +
             	name  +
 			"<br>" +
-			"<span class='icon'><i class='fas fa-user' aria-hidden='true'></i></span>" +
+			"<span class='icon'><i class='fas fa-list' aria-hidden='true'></i></span>" +
 				linksClickedList +
         	"</a>");
 	});

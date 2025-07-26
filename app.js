@@ -28,15 +28,15 @@ let hopCounter = 0
 
 let startURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Haus"
 let endURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Baracke"
-//app.use(favicon(path.join(__dirname, '/', 'favicon.ico')));
 
 app.use(bodyParser.urlencoded({
   extended: true
 }));
 
 app.use('/public',express.static('public'));
+app.use(favicon(__dirname + '/public/assets/favicon.ico'));
 app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __dirname })});
-app.get('/results', (_, res) => {res.sendFile('/public/html/results.html', {root: __dirname })});
+app.get('/admin', (_, res) => {res.sendFile('/public/html/admin.html', {root: __dirname })});
 app.listen(port, () => {console.log(`App listening on port ${port}!`)});
 
 function fetchRandomArticle() {
@@ -81,6 +81,7 @@ function fetchRelatedGoalArticle(URL) {
 						!href.includes("Datei:") &&
 						!href.includes("ISBN") &&
 						!href.includes("Kategorie") &&
+						!href.includes("Benutzer:") &&
 						!href.includes("Quelle") &&
 						!href.includes("Impressum") &&
 						!href.includes("Wikipedia:") &&
@@ -124,12 +125,16 @@ io.on("connection", (socket) => {
 
 	if (gameRunning) {
 		io.emit("starting", {"startURL": startURL, "endURL": endURL})
+		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
+
 	}
 
 	socket.on("startGame", () => {
 		finishedUsers = []
 		timeStamps = []
 		linksClickedList = []
+		hopCounter = 0
+
 		fetchRandomArticle()
 		.then(() => {
 			startURL = `http://${host}/proxy?url=` + startURL
@@ -148,18 +153,28 @@ io.on("connection", (socket) => {
 
 	socket.on('UserFinished', (user, linksClicked) => {
 		console.log(user + " has finished")
-		finishedUsers.push(user)
-		linksClickedList.push(linksClicked)
-		console.log(finishedUsers)
-		const ms = Date.now() - startTime;
-		timeStamps.push(ms)
-			console.log(linksClickedList)
-
+		updateScoreboardDB(user, linksClicked)
 		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
   }); 
 });
 
-
+function updateScoreboardDB(user, linksClicked) {
+	let allreadyFound = false
+	finishedUsers.forEach(function (item, index) {
+		if (item == user) {
+			linksClickedList[index] = linksClicked
+			const ms = Date.now() - startTime;
+			timeStamps[index] = ms
+			allreadyFound = true
+		}
+	});
+	if (!allreadyFound) {
+		finishedUsers.push(user)
+		linksClickedList.push(linksClicked)
+		const ms = Date.now() - startTime;
+		timeStamps.push(ms)
+	}
+}
 
 // Main HTML Proxy
 app.get('/proxy', async (req, res) => {

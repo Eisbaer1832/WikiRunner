@@ -1,9 +1,6 @@
 var socket = io("127.0.0.1:9877");
 
-socket.on("connect", () => {
-  console.log(socket.id); 
-});
-
+socket.on("connect", () => {});
 
 socket.on("starting", ({startURL, endURL}) => {
 	if (localStorage.getItem("finished") == "true") {
@@ -14,15 +11,13 @@ socket.on("starting", ({startURL, endURL}) => {
 		setupIframe(startURL)
 
 		localStorage.setItem("target", endURL)
-		fetchPageTitle(endURL)
 		gameStarted()
 	}
+	fetchPageTitle(endURL)
 });
 
 
 socket.on("updateScoreBoard", ({users, times, linksClickedList}) => {
-		console.log(linksClickedList)
-
 	displayScores(users, times, linksClickedList)
 });
 
