@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikirunner</title>
+    <link rel="stylesheet" href="/public/css/style.css" >
+    <link rel="stylesheet"href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+
+</head>
+<body>
+    <!--START navbar-->
+    <nav class="navbar is-transparent" role="navigation" aria-label="dropdown navigation">
+        <a class="navbar-item"><h1>🏃🏻‍➡️ WikiRunner</h1></a>
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <span class="tag is-dark is-large" id="targetLabel"></span>
+            </div>
+        </div>
+    </nav>
+    <button class="button is-danger is-dark" onclick="startGame()">Start Game</button>
+
+</body>
+<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="/public/js/socket.io.js" ></script>
+<script src="/public/js/websocket.js"></script>
+</html>

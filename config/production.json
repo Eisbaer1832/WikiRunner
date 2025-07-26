@@ -1,0 +1,9 @@
+{
+	"server": {
+    	"host": "wikirunner.tbwebtech.de",
+    	"port": 9876
+	},
+    "game": {
+		"hopTarget" : 4
+	}
+}
