@@ -6,12 +6,17 @@ const $ = require('jquery');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const app = express();
-
+const config = require('config');
 
 //https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
 
 const io = new Server(9877, { cors: { origin: '*', credentials: true }});
-const port = 9876;
+
+
+// config
+const port = config.get('server.port');
+const host = config.get('server.host');
+let maxHops = config.get('game.hopTarget');
 
 
 let startTime = 0
@@ -20,7 +25,6 @@ let finishedUsers = []
 let timeStamps = []
 let linksClickedList = []
 let hopCounter = 0
-let maxHops = 3
 
 let startURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Haus"
 let endURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Baracke"
@@ -79,6 +83,8 @@ function fetchRelatedGoalArticle(URL) {
 						!href.includes("Kategorie") &&
 						!href.includes("Quelle") &&
 						!href.includes("Impressum") &&
+						!href.includes("Wikipedia:") &&
+
 						href.includes("/wiki/") &&
 						href.includes("de.wikipedia.org")
 					) {
@@ -126,10 +132,10 @@ io.on("connection", (socket) => {
 		linksClickedList = []
 		fetchRandomArticle()
 		.then(() => {
-			startURL = "http://127.0.0.1:9876/proxy?url=" + startURL
+			startURL = `http://${host}/proxy?url=` + startURL
 			fetchRelatedGoalArticle(startURL)
 			.then(() => {
-				console.log(endURL)
+				console.log("Goal is: " + endURL + ". Managed to achieve a Hop count of " + hopCounter)
 				io.emit("starting", {"startURL": startURL, "endURL": endURL})
 				startTime = Date.now();
 				gameRunning = true;
@@ -174,16 +180,15 @@ app.get('/proxy', async (req, res) => {
 
 
     $('a').each(function () {
-		let href = $(this).attr('href');
-		try{
+		try {
+			let href = $(this).attr('href');
 			if (href.startsWith('/w')) {
 	     		href = "https://de.wikipedia.org" + href
 			}
+			$(this).attr('href', `http://${host}/proxy?url=` + href);
 		} catch (err) {
-			console.log("Proxy rewrite failed for" + href + " because " + err)
+			//console.log("Proxy rewrite failed for" + $(this) + " because " + err)
 		}
-		
-		$(this).attr('href', "http://127.0.0.1:9876/proxy?url=" + href);
 	})
 
     res.send($.html());
