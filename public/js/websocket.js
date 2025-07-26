@@ -14,19 +14,20 @@ socket.on("starting", ({startURL, endURL}) => {
 		setupIframe(startURL)
 
 		localStorage.setItem("target", endURL)
-		const goalText = endURL.split("/")
-		document.getElementById("targetLabel").innerHTML = "🏁" + "<strong>" + goalText[goalText.length - 1]  + "</strong>" + "🏁"
+		fetchPageTitle(endURL)
 		gameStarted()
 	}
 });
 
 
-socket.on("updateScoreBoard", ({users, times}) => {
-	displayScores(users, times)
+socket.on("updateScoreBoard", ({users, times, linksClickedList}) => {
+		console.log(linksClickedList)
+
+	displayScores(users, times, linksClickedList)
 });
 
-function remoteFinished() {
-  socket.emit("UserFinished", localStorage.getItem("username"));
+function remoteFinished(linksClicked) {
+  socket.emit("UserFinished", localStorage.getItem("username"), linksClicked);
 }
 
 

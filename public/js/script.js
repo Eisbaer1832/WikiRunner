@@ -5,8 +5,33 @@ const waitingScreen = document.getElementById("waitingScreen")
 const waitingText = document.getElementById("waitingText")
 const statBlock = document.getElementById("statBlock")
 const targetLabel = document.getElementById("targetLabel")
-localStorage.removeItem("URLtoCheck")
+localStorage.setItem("URLtoCheck", wikiFrame.src)
+
 const goalText = localStorage.getItem("target").split('/');
+let linksClicked = []
+function fetchPageTitle(argURL) {
+	let title = argURL.split("/")
+	title = title[title.length -1]
+
+		const URL = "https://api.wikimedia.org/core/v1/wikipedia/de/page/" + title
+		fetch(URL)
+			.then(response => {
+				if (!response.ok) {
+				throw new Error('Network response was not ok');
+				}
+				return response.json();
+			})
+			.then(data => {
+				title = data.title
+				document.getElementById("targetLabel").innerHTML = "🏁" + "<strong>" + title  + "</strong>" + "🏁"
+				waitingText.innerHTML = "Glückwunsch, du bist bei " + title + " angekommen 🎉"
+
+			})
+			.catch(err => {
+				console.error("Error fetching random article:", err);
+			});
+}
+
 
 function openModal($el) {
     $el.classList.add('is-active');
@@ -25,6 +50,7 @@ function resetUName() {
 }
 
 function gameStarted() {
+	console.log("gameStarted")
 	localStorage.setItem("finished", false)
 	wikiFrame.classList.remove("disabled")
 	waitingScreen.classList.add("disabled")
@@ -38,12 +64,11 @@ function setupIframe(startURL) {
 function localFinished() {
 	wikiFrame.classList.add("disabled")
 	waitingScreen.classList.remove("disabled")
-	waitingText.innerHTML = "Glückwunsch, du bist bei " + goalText[goalText.length - 1] + " angekommen 🎉"
 	statBlock.classList.remove("disabled")
 }
 
-function displayScores(names, times) {
-	console.log(names)
+function displayScores(names, times, linksClickedList) {
+	console.log(linksClickedList)
 	document.getElementById("statsInsert").innerHTML = ""
 	names.forEach((name, i) => {
 		$('#statsInsert').append("" +
@@ -52,8 +77,10 @@ function displayScores(names, times) {
 				times[i] / 1000 + " Sekunden" + 
 				" - " +
     		"<span class='icon'><i class='fas fa-user' aria-hidden='true'></i></span>" +
-
             	name  +
+			"<br>" +
+			"<span class='icon'><i class='fas fa-user' aria-hidden='true'></i></span>" +
+				linksClickedList +
         	"</a>");
 	});
 }
@@ -74,11 +101,16 @@ function main() {
 	});
 
 	window.addEventListener('storage', (event) => {
-		if (localStorage.getItem(event.key) == localStorage.getItem("target"), event.key == "URLtoCheck") {
-			console.log("finished")
-			localStorage.setItem("finished", true)
-			localFinished()
-			remoteFinished()
+		if (event.key == "URLtoCheck" ) {
+			let url = localStorage.getItem(event.key)
+			let urlArray = url.split("/")
+			linksClicked.push(urlArray[urlArray.length -1 ])
+			if (url == localStorage.getItem("target")) {
+				console.log("finished")
+				localStorage.setItem("finished", true)
+				localFinished()
+				remoteFinished(linksClicked)
+			}
 		}
 	});
 }

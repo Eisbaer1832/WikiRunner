@@ -18,7 +18,7 @@ let startTime = 0
 let gameRunning = false
 let finishedUsers = []
 let timeStamps = []
-
+let linksClickedList = []
 let hopCounter = 0
 let maxHops = 3
 
@@ -71,11 +71,14 @@ function fetchRelatedGoalArticle(URL) {
 					const href = $(link).attr('href');
 					if (
 						href &&
-						!href.includes("%") &&
 						!href.includes(".jpg") &&
 						!href.includes(".svg") &&
 						!href.includes("Hilfe:") &&
+						!href.includes("Datei:") &&
 						!href.includes("ISBN") &&
+						!href.includes("Kategorie") &&
+						!href.includes("Quelle") &&
+						!href.includes("Impressum") &&
 						href.includes("/wiki/") &&
 						href.includes("de.wikipedia.org")
 					) {
@@ -120,7 +123,7 @@ io.on("connection", (socket) => {
 	socket.on("startGame", () => {
 		finishedUsers = []
 		timeStamps = []
-
+		linksClickedList = []
 		fetchRandomArticle()
 		.then(() => {
 			startURL = "http://127.0.0.1:9876/proxy?url=" + startURL
@@ -137,14 +140,16 @@ io.on("connection", (socket) => {
 		});
 	})
 
-	socket.on('UserFinished', (user) => {
+	socket.on('UserFinished', (user, linksClicked) => {
 		console.log(user + " has finished")
 		finishedUsers.push(user)
+		linksClickedList.push(linksClicked)
 		console.log(finishedUsers)
 		const ms = Date.now() - startTime;
 		timeStamps.push(ms)
-		
-		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
+			console.log(linksClickedList)
+
+		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
   }); 
 });
 
@@ -161,21 +166,28 @@ app.get('/proxy', async (req, res) => {
     $('link[href], img[src]').each((_, el) => {
       	const attr = el.name === 'link' || el.name === 'img' ? 'href' : 'src';
       	const original = $(el).attr(attr);
-		$(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(new URL(original, baseUrl).toString())}`);
+		
+		const absolute = new URL(original, baseUrl).toString()
+		 $(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(absolute)}`);
     });
 
 
     $('a').each(function () {
 		let href = $(this).attr('href');
-		if (href.startsWith('/w')) {
-     		href = "https://de.wikipedia.org" + href
+		try{
+			if (href.startsWith('/w')) {
+	     		href = "https://de.wikipedia.org" + href
+			}
+		} catch (err) {
+			console.log("Proxy rewrite failed for" + href + " because " + err)
 		}
+		
 		$(this).attr('href', "http://127.0.0.1:9876/proxy?url=" + href);
 	})
 
     res.send($.html());
   } catch (err) {
-    res.status(500).send('Proxy HTML error');
+    res.status(500).send('Och nee, der Proxy ist doof' + err);
   }
 });
 // Asset Proxy (CSS, JS, images)
