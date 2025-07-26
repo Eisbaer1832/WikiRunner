@@ -1,9 +1,10 @@
 {
 	"server": {
-    	"host": "127.0.0.1:9876",
-    	"port": 9876
+	    	"host": "127.0.0.1:9876",
+	    	"port": 9876,
+		"proxyPort" : 9877
 	},
-    "game": {
+	"game": {
 		"hopTarget" : 1
 	}
 }

@@ -8,15 +8,15 @@ const cheerio = require('cheerio');
 const app = express();
 const config = require('config');
 
-//https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
-
-const io = new Server(9877, { cors: { origin: '*', credentials: true }});
-
-
 // config
 const port = config.get('server.port');
+const proxyPort = config.get('server.proxyPort')
 const host = config.get('server.host');
 let maxHops = config.get('game.hopTarget');
+
+
+const io = new Server(proxyPort, { cors: { origin: '*', credentials: true }});
+
 
 
 let startTime = 0
@@ -26,7 +26,7 @@ let timeStamps = []
 let linksClickedList = []
 let hopCounter = 0
 
-let startURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Haus"
+let startURL = "http://" + host + "/proxy?url=https://de.wikipedia.org/wiki/Haus"
 let endURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Baracke"
 
 app.use(bodyParser.urlencoded({
@@ -137,7 +137,8 @@ io.on("connection", (socket) => {
 
 		fetchRandomArticle()
 		.then(() => {
-			startURL = `http://${host}/proxy?url=` + startURL
+			startURL = `https://${host}/proxy?url=` + startURL
+			console.log("starting at: " + startURL)
 			fetchRelatedGoalArticle(startURL)
 			.then(() => {
 				console.log("Goal is: " + endURL + ". Managed to achieve a Hop count of " + hopCounter)
@@ -200,7 +201,7 @@ app.get('/proxy', async (req, res) => {
 			if (href.startsWith('/w')) {
 	     		href = "https://de.wikipedia.org" + href
 			}
-			$(this).attr('href', `http://${host}/proxy?url=` + href);
+			$(this).attr('href', `https://${host}/proxy?url=` + href);
 		} catch (err) {
 			//console.log("Proxy rewrite failed for" + $(this) + " because " + err)
 		}

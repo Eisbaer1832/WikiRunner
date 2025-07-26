@@ -23,6 +23,8 @@
     "eiows": "^8.2.0",
     "express": "^5.1.0",
     "http-proxy-middleware": "^3.0.5",
+    "jquery": "^3.7.1",
+    "serve-favicon": "^2.5.1",
     "socket.io": "^4.8.1"
   }
 }
