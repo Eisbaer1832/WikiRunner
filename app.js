@@ -163,8 +163,9 @@ app.get('/proxy', async (req, res) => {
     const $ = cheerio.load(response.data);
     const baseUrl = new URL(targetUrl);
 
+
     $('link[href], img[src]').each((_, el) => {
-      	const attr = el.name === 'link' || el.name === 'img' ? 'href' : 'src';
+      	const attr = el.name === 'link' ? 'href' : 'src';
       	const original = $(el).attr(attr);
 		
 		const absolute = new URL(original, baseUrl).toString()

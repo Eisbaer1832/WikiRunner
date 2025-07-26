@@ -34,4 +34,5 @@ function remoteFinished(linksClicked) {
 function startGame() {
 	localStorage.setItem("finished", false)
 	socket.emit("startGame")
+	return("starting Game")
 }
