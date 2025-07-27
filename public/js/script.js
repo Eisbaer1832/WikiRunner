@@ -51,6 +51,7 @@ function resetUName() {
 
 function gameStarted() {
 	console.log("gameStarted")
+	linksClicked=[]
 	localStorage.setItem("finished", false)
 	wikiFrame.classList.remove("disabled")
 	waitingScreen.classList.add("disabled")

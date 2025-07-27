@@ -18,11 +18,13 @@
             </div>
         </div>
     </nav>
-    <button class="button is-danger is-dark" onclick="startGame()">Start Game</button>
-
+    <button class="button is-danger is-dark" onclick="startGame(); updateAdmin()">Start Game</button>
+    <p id="targetFull"></p>
 </body>
 <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="/public/js/socket.io.js" ></script>
 <script src="/public/js/websocket.js"></script>
+<script src="/public/js/admin.js"></script>
+
 </html>

@@ -84,8 +84,9 @@ function fetchRelatedGoalArticle(URL) {
 						!href.includes("Benutzer:") &&
 						!href.includes("Quelle") &&
 						!href.includes("Impressum") &&
+						!href.includes("Diskussion:") &&
+						!href.includes("#") &&
 						!href.includes("Wikipedia:") &&
-
 						href.includes("/wiki/") &&
 						href.includes("de.wikipedia.org")
 					) {
