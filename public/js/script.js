@@ -5,31 +5,37 @@ const waitingScreen = document.getElementById("waitingScreen")
 const waitingText = document.getElementById("waitingText")
 const statBlock = document.getElementById("statBlock")
 const targetLabel = document.getElementById("targetLabel")
+const usernameText = document.getElementById("usernameText")
+const previewLabel = document.getElementById("previewLabel")
+const buttonLevel1 = document.getElementById("buttonLevel1")
+const buttonLevel2 = document.getElementById("buttonLevel2")
+
 localStorage.setItem("URLtoCheck", wikiFrame.src)
-
-const goalText = localStorage.getItem("target").split('/');
 let linksClicked = []
+let endURL = ""
+
 function fetchPageTitle(argURL) {
-	let title = argURL.split("/")
-	title = title[title.length -1]
+    return new Promise((resolve, reject) => {
+        let title = argURL.split("/");
+        title = title[title.length - 1];
 
-		const URL = "https://api.wikimedia.org/core/v1/wikipedia/de/page/" + title
-		fetch(URL)
-			.then(response => {
-				if (!response.ok) {
-				throw new Error('Network response was not ok');
-				}
-				return response.json();
-			})
-			.then(data => {
-				title = data.title
-				document.getElementById("targetLabel").innerHTML = "🏁" + "<strong>" + title  + "</strong>" + "🏁"
-				waitingText.innerHTML = "Glückwunsch, du bist bei " + title + " angekommen 🎉"
+        const URL = "https://api.wikimedia.org/core/v1/wikipedia/de/page/" + title;
 
-			})
-			.catch(err => {
-				console.error("Error fetching random article:", err);
-			});
+        fetch(URL)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                resolve(data.title); // Return the title when ready
+            })
+            .catch(err => {
+                console.error("Error fetching page title:", err);
+                reject(err);
+            });
+    });
 }
 
 
@@ -41,7 +47,7 @@ function closeModal($el) {
     username = $("#loginInput").val()
     localStorage.setItem("username", username);
     $el.classList.remove('is-active');
-    
+	ScreenState("lobby")
 }
 
 function resetUName() {
@@ -53,8 +59,13 @@ function gameStarted() {
 	console.log("gameStarted")
 	linksClicked=[]
 	localStorage.setItem("finished", false)
-	wikiFrame.classList.remove("disabled")
-	waitingScreen.classList.add("disabled")
+	endURL = localStorage.getItem("target")
+	console.log("getting " + endURL)
+	fetchPageTitle(endURL).then(title=> {
+		targetLabel.innerHTML = "🏁  Ziel: " + "<strong>" + title  + "</strong>" + "🏁"
+	})
+
+	ScreenState("running")
 }
 
 function setupIframe(startURL) {
@@ -62,10 +73,59 @@ function setupIframe(startURL) {
 	console.log(wikiFrame.src);
 }
 
-function localFinished() {
-	wikiFrame.classList.add("disabled")
-	waitingScreen.classList.remove("disabled")
-	statBlock.classList.remove("disabled")
+function displayReview(endURL) {
+	fetchPageTitle(endURL).then(title=> {
+		previewLabel.innerHTML = `Ziel: ${title}`
+		ButtonLevelStates("Level2")
+	})
+}
+function updatVotes(positive, negative, needed) {
+	const bar = document.querySelectorAll('.bar');
+	bar[0].style.width = `${negative /needed * 100}%`;
+	bar[1].style.width = `${positive /needed * 100}%`;
+
+}
+
+function ScreenState(state) {
+	switch(state) {
+		case "lobby":
+			wikiFrame.classList.add("disabled")
+			waitingScreen.classList.remove("disabled")
+			targetLabel.classList.add("disabled")
+			statBlock.classList.add("disabled")
+			waitingText.innerHTML = `Wilkommen bei  <p class="is-funky2"> Wikirunner !</p>`
+			usernameText.innerHTML= `Du bist angemeldet als <p class="is-funky">${username} </p>`
+			break;
+		case "running":
+			targetLabel.classList.remove("disabled")
+			wikiFrame.classList.remove("disabled")
+			waitingScreen.classList.add("disabled")
+			statBlock.classList.add("disabled")
+			break;
+		case "finished":
+			waitingText.innerHTML = "Glückwunsch, du bist bei " + fetchPageTitle(endURL)+ " angekommen 🎉"
+			targetLabel.classList.remove("disabled")
+			wikiFrame.classList.add("disabled")
+			waitingScreen.classList.remove("disabled")
+			statBlock.classList.remove("disabled")
+
+
+			break;
+		}
+}
+
+function ButtonLevelStates(state) {
+	switch(state) {
+		case "Level1":
+			buttonLevel1.classList.remove("disabled")
+			buttonLevel2.classList.add("disabled")
+			break;
+		case "Level2":
+			buttonLevel1.classList.add("disabled")
+			buttonLevel2.classList.remove("disabled")
+			break;
+	}
+		
 }
 
 function displayScores(names, times, linksClickedList) {
@@ -87,9 +147,8 @@ function displayScores(names, times, linksClickedList) {
 
 
 function main() {
-	wikiFrame.classList.add("disabled")
-	statBlock.classList.add("disabled")
-
+	ScreenState("lobby")
+	ButtonLevelStates("Level1")
 	if (!username) {
 		console.log("uname undefined")
 		openModal(loginModal)
@@ -101,14 +160,14 @@ function main() {
 	});
 
 	window.addEventListener('storage', (event) => {
-		if (event.key == "URLtoCheck" ) {
+		if (event.key == "URLtoCheck") {
 			let url = localStorage.getItem(event.key)
 			let urlArray = url.split("/")
 			linksClicked.push(urlArray[urlArray.length -1 ])
 			if (url == localStorage.getItem("target")) {
 				console.log("finished")
 				localStorage.setItem("finished", true)
-				localFinished()
+				ScreenState("finished")
 				remoteFinished(linksClicked)
 			}
 		}

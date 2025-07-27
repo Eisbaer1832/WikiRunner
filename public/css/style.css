@@ -6,3 +6,50 @@
 .disabled  {
     display: none !important;
 }
+
+.is-centered {
+    text-align: center;
+}
+
+.w-content {
+width: fit-content;
+  position: absolute;
+
+}
+
+.outerCenter {
+  width:100%;
+  display: flex;
+  justify-content: center;
+}
+
+.no-mb {
+    margin-bottom: 0 !important;
+}
+.is-funky {
+    /* based of this: https://codepen.io/thebabydino/pen/RNNQNxx */
+	place-self: center;
+	background: linear-gradient(90deg, #fec7d7, #0e172c, #a786df) -100%/ 200%;
+	-webkit-background-clip: text;
+	        background-clip: text;
+	color: transparent;
+	font: 900 clamp(1em, 5vw, 5em) exo, sans-serif;
+	animation: shimmer 2s linear infinite
+}
+
+.is-funky2 {
+    /* based of this: https://codepen.io/thebabydino/pen/RNNQNxx */
+	place-self: center;
+	background: linear-gradient(270deg, #ffa8ba, #fa5246, #faae2b) -100%/ 200%;
+	-webkit-background-clip: text;
+	        background-clip: text;
+	color: transparent;
+	font: 900 clamp(1em, 5vw, 5em) exo, sans-serif;
+	animation: shimmer 2s linear infinite
+}
+
+
+@keyframes shimmer { to { background-position: 100% } }
+
+
+

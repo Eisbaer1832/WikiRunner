@@ -26,8 +26,10 @@ let gameRunning = false
 let finishedUsers = []
 let timeStamps = []
 let linksClickedList = []
+let votePositiveCounter = 0
+let voteNegativeCounter = 0
 let hopCounter = 0
-
+let voteRunning = false
 let startURL = "http://" + host + "/proxy?url=https://de.wikipedia.org/wiki/Haus"
 let endURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Baracke"
 
@@ -128,19 +130,20 @@ function fetchRelatedGoalArticle(URL) {
 
 io.on("connection", (socket) => {
 	io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
-
+	if (voteRunning) {
+		io.emit("voteRunning", endURL)
+		io.emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
+	}
 	if (gameRunning) {
-		io.emit("starting", {"startURL": startURL, "endURL": endURL})
+		io.emit("reconnecting", {"startURL": startURL, "endURL": endURL})
 		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
 
 	}
-
-	socket.on("startGame", () => {
-		finishedUsers = []
-		timeStamps = []
-		linksClickedList = []
-		hopCounter = 0
-
+	function getNextItems() {
+		voteRunning = true
+		votePositiveCounter = 0
+		voteNegativeCounter = 0
+		io.emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
 		fetchRandomArticle()
 		.then(() => {
 			startURL = `${protocol}://${host}/proxy?url=` + startURL
@@ -148,34 +151,64 @@ io.on("connection", (socket) => {
 			fetchRelatedGoalArticle(startURL)
 			.then(() => {
 				console.log("Goal is: " + endURL + ". Managed to achieve a Hop count of " + hopCounter)
-				io.emit("starting", {"startURL": startURL, "endURL": endURL})
-				startTime = Date.now();
-				gameRunning = true;
+				
+				io.emit("reviewItems", endURL)
 			})
 		})
 		.catch(err => {
 			console.error("Error starting game:", err);
 		});
+	}
+	socket.on("getNextItems", () => {
+		getNextItems()
 	})
 
 	socket.on('UserFinished', (user, linksClicked) => {
 		console.log(user + " has finished")
 		updateScoreboardDB(user, linksClicked)
 		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
-  }); 
+  	}); 
+
+	socket.on("voteUseItem", vote => {
+		const needed = io.of("/").sockets.size / 2
+		if (vote) {
+			votePositiveCounter++
+		}else{
+			voteNegativeCounter++
+		}
+		io.emit("updateVotingStats", {"needed": io.of("/").sockets.size, "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
+
+		if (votePositiveCounter >= needed) {
+			finishedUsers = []
+			timeStamps = []
+			linksClickedList = []
+			hopCounter = 0
+			votePositiveCounter = 0
+			voteNegativeCounter = 0
+			io.emit("starting", {"startURL": startURL, "endURL": endURL})
+			startTime = Date.now();
+			gameRunning = true;
+			voteRunning = false;
+		}else if (voteNegativeCounter > needed) {
+			getNextItems()
+		}
+		else{
+			console.log(`${votePositiveCounter} voted positive, ${needed - votePositiveCounter} more votes needed!`)
+		}
+	})
 });
 
 function updateScoreboardDB(user, linksClicked) {
-	let allreadyFound = false
+	let alreadyFound = false
 	finishedUsers.forEach(function (item, index) {
 		if (item == user) {
 			linksClickedList[index] = linksClicked
 			const ms = Date.now() - startTime;
 			timeStamps[index] = ms
-			allreadyFound = true
+			alreadyFound = true
 		}
 	});
-	if (!allreadyFound) {
+	if (!alreadyFound) {
 		finishedUsers.push(user)
 		linksClickedList.push(linksClicked)
 		const ms = Date.now() - startTime;

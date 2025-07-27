@@ -5,27 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wikirunner</title>
     <link rel="stylesheet" href="/public/css/style.css" >
+    <link rel="stylesheet" href="/public/css/progressBar.css">
     <link rel="stylesheet"href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
 
 </head>
 <body>
     <!--START navbar-->
     <nav class="navbar is-transparent" role="navigation" >
-        <a class="navbar-item" style="    margin-right: 0 !important;"><h1>🏃🏻‍➡️ WikiRunner</h1></a>
+        <a class="navbar-item" style="margin-right: 0 !important;"><h1>🏃🏻‍➡️ WikiRunner</h1></a>
         <div class="navbar-end">
-            <div class="navbar-item">
-                <span class="tag  is-medium " id="targetLabel"></span>
-                <button class="button is-danger is-small" onclick="resetUName()">Nutzernamen zurücksetzen</button>
+            <div class="outerCenter">
+                <div class="navbar-item">
+                    <button class="button  is-light"> 
+                        <span class='icon'><i class='fas fa-door-open' ></i></span>
+                    </button>
+                    <span class="tag  is-medium " id="targetLabel"></span>
+                </div>
             </div>
         </div>
     </nav>
     <iframe id="wikiFrame" class="wikipedia" src="http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/" ></iframe> 
 
-    <div id="waitingScreen" class="card box m-3">
-        <div class="card-content">
-            <p class="title" id="waitingText">
-                Das Spiel ist noch nicht gestartet, spiele so lange dieses Spiel hier:
-            </p>
+    <div id="waitingScreen" >
+        <div class="outerCenter">
+            <div class="card box m-3 w-content">
+                <p class="card-content title is-centered no-mb" id="waitingText">Wilkommen bei Wikirunner</p>
+                <p class="card-content is-centered" id="previewLabel">Worum wird es wohl gehen 🤔</p>
+                <div class="outerCenter" id="buttonLevel1"><button class="button is-success is-medium" onclick="getNextItems()"> Spiel Starten</button></div>
+                <div id="buttonLevel2">
+                    <div class="progressBarContainer m-1"><div class="bar red"></div></div>
+                    <div class="progressBarContainer m-1"><div class="bar green"></div></div>
+                    <div class="outerCenter">
+                        <button class="button is-success is-medium m-1 " onclick="voteUseItem(false)"> Ein anderer Begriff</button>
+                        <button class="button is-success is-medium m-1" onclick="voteUseItem(true)">Spiel Starten</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="outerCenter">
+            <div class="card box m-3">
+                <p class="card-content  title is-centered" id="usernameText">
+                    Wer bist du?
+                </p>
+                <div class="outerCenter"><button class="button is-danger is-medium" onclick="resetUName()">Gleich nicht mehr!</button></div>
+            </div>
         </div>
         <div id="statBlock">
             <article class="panel is-info m-3">
