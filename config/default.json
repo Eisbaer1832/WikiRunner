@@ -2,7 +2,9 @@
 	"server": {
 	    	"host": "127.0.0.1:9876",
 	    	"port": 9876,
-		"proxyPort" : 9877
+			"proxyPort" : 9877,
+			"encrypted": false
+
 	},
 	"game": {
 		"hopTarget" : 1

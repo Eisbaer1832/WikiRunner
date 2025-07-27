@@ -12,6 +12,8 @@ const config = require('config');
 const port = config.get('server.port');
 const proxyPort = config.get('server.proxyPort')
 const host = config.get('server.host');
+const protocol = (config.get("server.encrypted")) ? "https" : "http";
+
 let maxHops = config.get('game.hopTarget');
 
 
@@ -38,6 +40,9 @@ app.use(favicon(__dirname + '/public/assets/favicon.ico'));
 app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __dirname })});
 app.get('/admin', (_, res) => {res.sendFile('/public/html/admin.html', {root: __dirname })});
 app.listen(port, () => {console.log(`App listening on port ${port}!`)});
+console.log("Protocol: " + protocol)
+console.log("Host: " + host)
+console.log("Proxy Port: " + proxyPort)
 
 function fetchRandomArticle() {
 	return new Promise((resolve, reject) => {
@@ -138,7 +143,7 @@ io.on("connection", (socket) => {
 
 		fetchRandomArticle()
 		.then(() => {
-			startURL = `https://${host}/proxy?url=` + startURL
+			startURL = `${protocol}://${host}/proxy?url=` + startURL
 			console.log("starting at: " + startURL)
 			fetchRelatedGoalArticle(startURL)
 			.then(() => {
@@ -202,7 +207,7 @@ app.get('/proxy', async (req, res) => {
 			if (href.startsWith('/w')) {
 	     		href = "https://de.wikipedia.org" + href
 			}
-			$(this).attr('href', `https://${host}/proxy?url=` + href);
+			$(this).attr('href', `${protocol}://${host}/proxy?url=` + href);
 		} catch (err) {
 			//console.log("Proxy rewrite failed for" + $(this) + " because " + err)
 		}

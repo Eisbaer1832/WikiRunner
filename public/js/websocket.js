@@ -1,4 +1,4 @@
-var socket = io("wikirunner.tbwebtech.de");
+var socket = io("127.0.0.1:9877");
 
 socket.on("connect", () => {});
 

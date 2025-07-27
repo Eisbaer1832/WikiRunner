@@ -2,7 +2,8 @@
 	"server": {
 	    	"host": "wikirunner.tbwebtech.de",
     		"port": 9879,
-		"proxyPort" : 9897
+			"proxyPort" : 9897,
+			"encrypted": true
 	},
 	    "game": {
 		"hopTarget" : 4
