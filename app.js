@@ -163,6 +163,11 @@ io.on("connection", (socket) => {
 		getNextItems()
 	})
 
+	socket.on("closeGame", () => {
+		gameRunning = false;
+		io.emit("closeGameOnClients")
+	})
+
 	socket.on('UserFinished', (user, linksClicked) => {
 		console.log(user + " has finished")
 		updateScoreboardDB(user, linksClicked)

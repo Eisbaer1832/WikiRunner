@@ -34,10 +34,14 @@ socket.on("voteRunning", endURL => {
 	ButtonLevelStates("Level2")
 });
 
+
 socket.on("updateVotingStats",({needed, positive, negative}) => {
-	console.log(positive)
-	console.log(negative)
 	updatVotes(positive, negative, needed)
+});
+
+socket.on("closeGameOnClients", endURL => {
+	ScreenState("lobby")
+	ButtonLevelStates("Level1")
 });
 
 function remoteFinished(linksClicked) {
@@ -58,4 +62,9 @@ function startGame() {
 
 function voteUseItem(vote) {
 	socket.emit("voteUseItem", vote)
+}
+
+
+function closeGame() {
+	socket.emit("closeGame")
 }
