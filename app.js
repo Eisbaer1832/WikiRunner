@@ -82,22 +82,17 @@ function fetchRelatedGoalArticle(URL) {
 					const href = $(link).attr('href');
 					if (
 						href &&
-						!href.includes(".jpg") &&
-						!href.includes(".svg") &&
-						!href.includes("Hilfe:") &&
-						!href.includes("Datei:") &&
-						!href.includes("ISBN") &&
-						!href.includes("Kategorie") &&
-						!href.includes("Benutzer:") &&
-						!href.includes("Quelle") &&
-						!href.includes("Impressum") &&
-						!href.includes("Diskussion:") &&
-						!href.includes("#") &&
-						!href.includes("Wikipedia:") &&
 						href.includes("/wiki/") &&
 						href.includes("de.wikipedia.org")
 					) {
-						articles.push(href);
+						const blacklist = config.get('game.blacklist');
+						let isAllowed = true;
+						blacklist.forEach((element) => {
+							if (href.includes(element)) {
+								isAllowed = false
+							}
+						});
+						if(isAllowed) {articles.push(href);}
 					}
 				});
 
@@ -245,6 +240,8 @@ app.get('/proxy', async (req, res) => {
 			let href = $(this).attr('href');
 			if (href.startsWith('/w')) {
 	     		href = "https://de.wikipedia.org" + href
+			}else if (href.startsWith('#')) {
+				href = targetUrl + href
 			}
 			$(this).attr('href', `${protocol}://${host}/proxy?url=` + href);
 		} catch (err) {

@@ -7,6 +7,7 @@
 
 	},
 	"game": {
-		"hopTarget" : 1
+		"hopTarget" : 1,
+		"blacklist": [".jpg", ".svg","Hilfe:","Datei:","ISBN","Kategorie", "Benutzer:", "Quelle", "Impressum", "Diskussion:", "#","Wikipedia:", "Spezial:"]
 	}
 }
