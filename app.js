@@ -143,6 +143,7 @@ io.on("connection", (socket) => {
 		voteRunning = true
 		votePositiveCounter = 0
 		voteNegativeCounter = 0
+		hopCounter = 0
 		io.emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
 		fetchRandomArticle()
 		.then(() => {
