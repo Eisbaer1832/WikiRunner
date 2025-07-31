@@ -3,6 +3,7 @@ var socket = io("127.0.0.1:9877");
 socket.on("connect", () => {});
 
 socket.on("starting", ({startURL, endURL}) => {
+	localStorage.setItem("allreadyVoted", false)
 	setupIframe(startURL)
 	localStorage.setItem("target", endURL)
 	gameStarted()
@@ -26,16 +27,18 @@ socket.on("updateScoreBoard", ({users, times, linksClickedList}) => {
 });
 
 socket.on("reviewItems", endURL => {
-	displayReview(endURL)
-});
-
-socket.on("voteRunning", endURL => {
-	displayReview(endURL)
+	localStorage.setItem("allreadyVoted", false)
 	ButtonLevelStates("Level2")
+	console.log("reviewItems")
+	displayReview(endURL)
 });
 
+socket.on("voteRunning", (endURL) => {
+	displayReview(endURL)	
+});
 
 socket.on("updateVotingStats",({needed, positive, negative}) => {
+	console.log("updateVotingStats")
 	updatVotes(positive, negative, needed)
 });
 
@@ -61,7 +64,9 @@ function startGame() {
 
 
 function voteUseItem(vote) {
-	socket.emit("voteUseItem", vote)
+	ButtonLevelStates("disabledVoteUI")
+	localStorage.setItem("allreadyVoted", true)
+	socket.emit("voteUseItem", vote, localStorage.getItem("username"))
 }
 
 

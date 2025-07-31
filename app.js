@@ -20,7 +20,6 @@ let maxHops = config.get('game.hopTarget');
 const io = new Server(proxyPort, { cors: { origin: '*', credentials: true }});
 
 
-
 let startTime = 0
 let gameRunning = false
 let finishedUsers = []
@@ -28,6 +27,7 @@ let timeStamps = []
 let linksClickedList = []
 let votePositiveCounter = 0
 let voteNegativeCounter = 0
+let userVoteList = []
 let hopCounter = 0
 let voteRunning = false
 let startURL = "http://" + host + "/proxy?url=https://de.wikipedia.org/wiki/Haus"
@@ -170,31 +170,34 @@ io.on("connection", (socket) => {
 		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
   	}); 
 
-	socket.on("voteUseItem", vote => {
+	socket.on("voteUseItem", (vote, username) => {
 		const needed = io.of("/").sockets.size / 2
-		if (vote) {
-			votePositiveCounter++
-		}else{
-			voteNegativeCounter++
-		}
-		io.emit("updateVotingStats", {"needed": io.of("/").sockets.size, "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
 
-		if (votePositiveCounter >= needed) {
-			finishedUsers = []
-			timeStamps = []
-			linksClickedList = []
-			hopCounter = 0
-			votePositiveCounter = 0
-			voteNegativeCounter = 0
-			io.emit("starting", {"startURL": startURL, "endURL": endURL})
-			startTime = Date.now();
-			gameRunning = true;
-			voteRunning = false;
-		}else if (voteNegativeCounter > needed) {
-			getNextItems()
-		}
-		else{
-			console.log(`${votePositiveCounter} voted positive, ${needed - votePositiveCounter} more votes needed!`)
+		if (!userVoteList.includes(username)) {
+			userVoteList.push(username)
+			vote ? votePositiveCounter++ : voteNegativeCounter++
+
+			io.emit("updateVotingStats", {"needed": io.of("/").sockets.size, "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
+
+			if (votePositiveCounter >= needed) {
+				finishedUsers = []
+				timeStamps = []
+				linksClickedList = []
+				userVoteList = []
+				hopCounter = 0
+				votePositiveCounter = 0
+				voteNegativeCounter = 0
+				io.emit("starting", {"startURL": startURL, "endURL": endURL})
+				startTime = Date.now();
+				gameRunning = true;
+				voteRunning = false;
+			}else if (voteNegativeCounter > needed) {
+				userVoteList = []
+				getNextItems()
+			}
+			else{
+				console.log(`${votePositiveCounter} voted positive, ${needed - votePositiveCounter} more votes needed!`)
+			}
 		}
 	})
 });

@@ -103,7 +103,10 @@ function ScreenState(state) {
 			statBlock.classList.add("disabled")
 			break;
 		case "finished":
-			waitingText.innerHTML = "Glückwunsch, du bist bei " + fetchPageTitle(endURL)+ " angekommen 🎉"
+			fetchPageTitle(endURL).then(title=> {
+				waitingText.innerHTML = "Glückwunsch, du bist bei " + title + " angekommen 🎉"
+			})
+			ButtonLevelStates("Level1")
 			targetLabel.classList.remove("disabled")
 			wikiFrame.classList.add("disabled")
 			waitingScreen.classList.remove("disabled")
@@ -123,7 +126,17 @@ function ButtonLevelStates(state) {
 		case "Level2":
 			buttonLevel1.classList.add("disabled")
 			buttonLevel2.classList.remove("disabled")
+			Array.from(buttonLevel2.children[2].children).forEach(element =>  {
+				element.removeAttribute("disabled");
+			})
+
 			break;
+		case "disabledVoteUI":
+			buttonLevel1.classList.add("disabled")
+			buttonLevel2.classList.remove("disabled")
+			Array.from(buttonLevel2.children[2].children).forEach(element =>  {
+				element.setAttribute("disabled", "disabled");
+			})
 	}
 		
 }
@@ -163,7 +176,9 @@ function main() {
 		if (event.key == "URLtoCheck") {
 			let url = localStorage.getItem(event.key)
 			let urlArray = url.split("/")
-			linksClicked.push(urlArray[urlArray.length -1 ])
+			fetchPageTitle(urlArray[urlArray.length -1 ]).then( title => {
+				linksClicked.push(title)
+			})
 			if (url == localStorage.getItem("target")) {
 				console.log("finished")
 				localStorage.setItem("finished", true)
