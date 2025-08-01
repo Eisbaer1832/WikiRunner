@@ -9,6 +9,8 @@ const usernameText = document.getElementById("usernameText")
 const previewLabel = document.getElementById("previewLabel")
 const buttonLevel1 = document.getElementById("buttonLevel1")
 const buttonLevel2 = document.getElementById("buttonLevel2")
+const roomSelect = document.getElementById("roomSelect")
+
 
 localStorage.setItem("URLtoCheck", wikiFrame.src)
 let linksClicked = []
@@ -88,11 +90,20 @@ function updatVotes(positive, negative, needed) {
 
 function ScreenState(state) {
 	switch(state) {
+		case "roomSelect":
+			wikiFrame.classList.add("disabled")
+			waitingScreen.classList.add("disabled")
+			targetLabel.classList.add("disabled")
+			statBlock.classList.add("disabled")
+			roomSelect.classList.remove("disabled")
+			break;
+
 		case "lobby":
 			wikiFrame.classList.add("disabled")
 			waitingScreen.classList.remove("disabled")
 			targetLabel.classList.add("disabled")
 			statBlock.classList.add("disabled")
+			roomSelect.classList.add("disabled")
 			waitingText.innerHTML = `Wilkommen bei  <p class="is-funky2"> Wikirunner !</p>`
 			usernameText.innerHTML= `Du bist angemeldet als <p class="is-funky">${username} </p>`
 			break;
@@ -101,6 +112,7 @@ function ScreenState(state) {
 			wikiFrame.classList.remove("disabled")
 			waitingScreen.classList.add("disabled")
 			statBlock.classList.add("disabled")
+			roomSelect.classList.add("disabled")
 			break;
 		case "finished":
 			fetchPageTitle(endURL).then(title=> {
@@ -111,8 +123,7 @@ function ScreenState(state) {
 			wikiFrame.classList.add("disabled")
 			waitingScreen.classList.remove("disabled")
 			statBlock.classList.remove("disabled")
-
-
+			roomSelect.classList.add("disabled")
 			break;
 		}
 }
@@ -160,7 +171,7 @@ function displayScores(names, times, linksClickedList) {
 
 
 function main() {
-	ScreenState("lobby")
+	ScreenState("roomSelect")
 	ButtonLevelStates("Level1")
 	if (!username) {
 		console.log("uname undefined")

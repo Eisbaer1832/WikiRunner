@@ -1,6 +1,18 @@
 var socket = io("127.0.0.1:9877");
-
+let room = 0
 socket.on("connect", () => {});
+
+
+function createLobby() {
+	ScreenState("lobby")
+	ButtonLevelStates("Level1")
+	socket.emit("createLobby", (response) => {
+		room = response.room
+		console.log("Joining room: " +  room)
+	})
+}
+
+
 
 socket.on("starting", ({startURL, endURL}) => {
 	localStorage.setItem("allreadyVoted", false)
@@ -48,17 +60,17 @@ socket.on("closeGameOnClients", endURL => {
 });
 
 function remoteFinished(linksClicked) {
-  socket.emit("UserFinished", localStorage.getItem("username"), linksClicked);
+  socket.emit("UserFinished", room, localStorage.getItem("username"), linksClicked);
 }
 
 
 function getNextItems() {
-	socket.emit("getNextItems")
+	socket.emit("getNextItems", room)
 }
 
 function startGame() {
 	localStorage.setItem("finished", false)
-	socket.emit("startGame")
+	socket.emit("startGame", room)
 	return("starting Game")
 }
 
@@ -66,10 +78,11 @@ function startGame() {
 function voteUseItem(vote) {
 	ButtonLevelStates("disabledVoteUI")
 	localStorage.setItem("allreadyVoted", true)
-	socket.emit("voteUseItem", vote, localStorage.getItem("username"))
+	socket.emit("voteUseItem", room, vote, localStorage.getItem("username"))
 }
 
 
 function closeGame() {
 	socket.emit("closeGame")
 }
+

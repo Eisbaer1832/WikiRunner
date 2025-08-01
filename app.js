@@ -7,6 +7,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const app = express();
 const config = require('config');
+const fs = require('fs');
 
 // config
 const port = config.get('server.port');
@@ -18,20 +19,26 @@ let maxHops = config.get('game.hopTarget');
 
 
 const io = new Server(proxyPort, { cors: { origin: '*', credentials: true }});
+activeRooms = []
+const games = new Map();
 
+class Game {
+	startTime = 0
+	gameRunning = false
+	finishedUsers = []
+	timeStamps = []
+	linksClickedList = []
+	votePositiveCounter = 0
+	voteNegativeCounter = 0
+	userVoteList = []
+	hopCounter = 0
+	voteRunning = false
+	startURL
+	endURL
 
-let startTime = 0
-let gameRunning = false
-let finishedUsers = []
-let timeStamps = []
-let linksClickedList = []
-let votePositiveCounter = 0
-let voteNegativeCounter = 0
-let userVoteList = []
-let hopCounter = 0
-let voteRunning = false
-let startURL = "http://" + host + "/proxy?url=https://de.wikipedia.org/wiki/Haus"
-let endURL = "http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/wiki/Baracke"
+	constructor() {}
+
+}
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -46,6 +53,14 @@ console.log("Protocol: " + protocol)
 console.log("Host: " + host)
 console.log("Proxy Port: " + proxyPort)
 
+function createRoom() {
+  while (true){
+    roomCode = Math.round(Math.random() * (9999 - 1000) + 1000);
+    if (!activeRooms.includes(roomCode)) {
+      return roomCode
+    }
+  }
+}
 function fetchRandomArticle() {
 	return new Promise((resolve, reject) => {
 		const URL = "https://de.wikipedia.org/api/rest_v1/page/random/summary"
@@ -124,22 +139,36 @@ function fetchRelatedGoalArticle(URL) {
 
 
 io.on("connection", (socket) => {
-	io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
-	if (voteRunning) {
-		io.emit("voteRunning", endURL)
-		io.emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
-	}
-	if (gameRunning) {
-		io.emit("reconnecting", {"startURL": startURL, "endURL": endURL})
-		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
+	socket.on("createLobby", (callback) => {
+		const roomCode = createRoom()
+		activeRooms.push(roomCode)  	
+		games.set(roomCode, new Game())
+		socket.join(roomCode)
+		callback({
+      		roomCode: roomCode.toString()
+    	});
+	})
 
-	}
-	function getNextItems() {
+	socket.on("reconnecting", (room) => {
+
+		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
+
+		if (voteRunning) {
+			io.emit("voteRunning", endURL)
+			io.emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
+		}
+		if (gameRunning) {
+			io.emit("reconnecting", {"startURL": startURL, "endURL": endURL})
+			io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
+		}	
+	})
+
+	function getNextItems(room) {
 		voteRunning = true
 		votePositiveCounter = 0
 		voteNegativeCounter = 0
 		hopCounter = 0
-		io.emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
+		io.to(room).emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
 		fetchRandomArticle()
 		.then(() => {
 			startURL = `${protocol}://${host}/proxy?url=` + startURL
@@ -148,36 +177,36 @@ io.on("connection", (socket) => {
 			.then(() => {
 				console.log("Goal is: " + endURL + ". Managed to achieve a Hop count of " + hopCounter)
 				
-				io.emit("reviewItems", endURL)
+				io.to(room).emit("reviewItems", endURL)
 			})
 		})
 		.catch(err => {
 			console.error("Error starting game:", err);
 		});
 	}
-	socket.on("getNextItems", () => {
-		getNextItems()
+	socket.on("getNextItems", (room) => {
+		getNextItems(room)
 	})
 
-	socket.on("closeGame", () => {
+	socket.on("closeGame", (room) => {
 		gameRunning = false;
-		io.emit("closeGameOnClients")
+		io.to(room).emit("closeGameOnClients")
 	})
 
-	socket.on('UserFinished', (user, linksClicked) => {
+	socket.on('UserFinished', (room, user, linksClicked) => {
 		console.log(user + " has finished")
 		updateScoreboardDB(user, linksClicked)
-		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
+		io.to(room).emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
   	}); 
 
-	socket.on("voteUseItem", (vote, username) => {
+	socket.on("voteUseItem", (room, vote, username) => {
 		const needed = io.of("/").sockets.size / 2
 
 		if (!userVoteList.includes(username)) {
 			userVoteList.push(username)
 			vote ? votePositiveCounter++ : voteNegativeCounter++
 
-			io.emit("updateVotingStats", {"needed": io.of("/").sockets.size, "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
+			io.to(room).emit("updateVotingStats", {"needed": io.of("/").sockets.size, "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
 
 			if (votePositiveCounter >= needed) {
 				finishedUsers = []
@@ -187,7 +216,7 @@ io.on("connection", (socket) => {
 				hopCounter = 0
 				votePositiveCounter = 0
 				voteNegativeCounter = 0
-				io.emit("starting", {"startURL": startURL, "endURL": endURL})
+				io.to(room).emit("starting", {"startURL": startURL, "endURL": endURL})
 				startTime = Date.now();
 				gameRunning = true;
 				voteRunning = false;
