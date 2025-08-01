@@ -28,11 +28,12 @@
 
     <div id="roomSelect" class="outerCenter">
         <div class="card box m-3 w-content">
-            <p class="card-content title is-centered no-mb" id="waitingText">Wilkommen bei  <p class="is-funky2 is-centered"> Wikirunner !</p></p>
+            <p class="card-content title is-centered no-mb" >Wilkommen bei  <p class="is-funky2 is-centered"> Wikirunner !</p></p>
             <div class="card box m-3" style="width:auto">
                 <div class="outerCenter"><button class="button  is-medium m-1 is-centered" onclick="createLobby()">Lobby erstellen</button></div>
+                    <p class="has-text-danger disabled" id="lobbyError">Dise Lobby existiert nicht!</p>
                 <div class="level">
-                    <input class="input is-normal " type="text" placeholder="Raumcode"/>
+                    <input class="input is-normal " type="text" placeholder="Raumcode" id="roomInput"/>
                     <div class="outerCenter" ><button class=" button is-normal is-centered" onclick="joinLobby()">Lobby Beitreten</button></div>
 
                 </div>

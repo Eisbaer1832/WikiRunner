@@ -88,7 +88,7 @@ function updatVotes(positive, negative, needed) {
 
 }
 
-function ScreenState(state) {
+function ScreenState(state, room = "???") {
 	switch(state) {
 		case "roomSelect":
 			wikiFrame.classList.add("disabled")
@@ -104,7 +104,9 @@ function ScreenState(state) {
 			targetLabel.classList.add("disabled")
 			statBlock.classList.add("disabled")
 			roomSelect.classList.add("disabled")
-			waitingText.innerHTML = `Wilkommen bei  <p class="is-funky2"> Wikirunner !</p>`
+			console.log("lobby" + room)
+			console.log(waitingText)
+			waitingText.innerHTML = `Du befindest dich im Raum <p class="is-funky2">${room}</p>`
 			usernameText.innerHTML= `Du bist angemeldet als <p class="is-funky">${username} </p>`
 			break;
 		case "running":

@@ -4,14 +4,27 @@ socket.on("connect", () => {});
 
 
 function createLobby() {
-	ScreenState("lobby")
 	ButtonLevelStates("Level1")
 	socket.emit("createLobby", (response) => {
 		room = response.room
+		ScreenState("lobby", room)
 		console.log("Joining room: " +  room)
 	})
 }
 
+function joinLobby() {
+	room = document.getElementById("roomInput").value
+	console.log(room)
+	socket.emit("joinLobby", room, (response) => {
+		if (response.status) {
+				ButtonLevelStates("Level1")
+				ScreenState("lobby", room)
+		}else {
+			document.getElementById("lobbyError").classList.remove("disabled")
+			console.log("Unable to join")
+		}
+	})
+}
 
 
 socket.on("starting", ({startURL, endURL}) => {
@@ -55,12 +68,13 @@ socket.on("updateVotingStats",({needed, positive, negative}) => {
 });
 
 socket.on("closeGameOnClients", endURL => {
-	ScreenState("lobby")
+	ScreenState("roomSelect")
 	ButtonLevelStates("Level1")
 });
 
 function remoteFinished(linksClicked) {
-  socket.emit("UserFinished", room, localStorage.getItem("username"), linksClicked);
+	console.log("room " + room)
+	socket.emit("UserFinished", room, localStorage.getItem("username"), linksClicked);
 }
 
 
@@ -83,6 +97,6 @@ function voteUseItem(vote) {
 
 
 function closeGame() {
-	socket.emit("closeGame")
+	socket.emit("closeGame", room)
 }
 

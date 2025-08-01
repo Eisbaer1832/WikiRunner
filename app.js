@@ -61,7 +61,8 @@ function createRoom() {
     }
   }
 }
-function fetchRandomArticle() {
+function fetchRandomArticle(room) {
+	let g = games.get(room)
 	return new Promise((resolve, reject) => {
 		const URL = "https://de.wikipedia.org/api/rest_v1/page/random/summary"
 		fetch(URL)
@@ -72,8 +73,8 @@ function fetchRandomArticle() {
 				return response.json();
 			})
 			.then(data => {
-				startURL = data.content_urls.desktop.page
-				resolve(startURL)
+				g.startURL = data.content_urls.desktop.page
+				resolve(g.startURL)
 			})
 			.catch(err => {
 				console.error("Error fetching random article:", err);
@@ -82,7 +83,9 @@ function fetchRandomArticle() {
 	});
 }
 
-function fetchRelatedGoalArticle(URL) {
+function fetchRelatedGoalArticle(room, URL) {
+	console.log(URL)
+	let g = games.get(room)
 	return new Promise((resolve, reject) => {
 		let articles = [];
 		console.log("URL: " + URL);
@@ -117,16 +120,16 @@ function fetchRelatedGoalArticle(URL) {
 
 					console.log(`Found ${articles.length} articles`);
 
-					if (hopCounter < maxHops) {
-						hopCounter++;
-						fetchRelatedGoalArticle(article).then(resolve).catch(reject);
+					if (g.hopCounter < maxHops) {
+						g.hopCounter++;
+						fetchRelatedGoalArticle(room, article).then(resolve).catch(reject);
 					} else {
-						endURL = article;
-						resolve(endURL);
+						g.endURL = article;
+						resolve(g.endURL);
 					}
 				} else {
-						endURL = URL
-						resolve(endURL);
+						g.endURL = URL
+						resolve(g.endURL);
 				}
 			})
 			.catch(err => {
@@ -140,14 +143,26 @@ function fetchRelatedGoalArticle(URL) {
 
 io.on("connection", (socket) => {
 	socket.on("createLobby", (callback) => {
-		const roomCode = createRoom()
+		const roomCode = createRoom().toString()
+		console.log(roomCode)
 		activeRooms.push(roomCode)  	
 		games.set(roomCode, new Game())
 		socket.join(roomCode)
 		callback({
-      		roomCode: roomCode.toString()
+      		room: roomCode
     	});
 	})
+	socket.on("joinLobby", (room, callback) => {
+		success = true
+		activeRooms.includes(room) ? socket.join(room) : success = false
+		console.log("rooms" + activeRooms)
+		console.log("room:" + room)
+		callback({
+      		status: success
+    	});
+	})
+
+	
 
 	socket.on("reconnecting", (room) => {
 
@@ -155,7 +170,7 @@ io.on("connection", (socket) => {
 
 		if (voteRunning) {
 			io.emit("voteRunning", endURL)
-			io.emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
+			io.emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
 		}
 		if (gameRunning) {
 			io.emit("reconnecting", {"startURL": startURL, "endURL": endURL})
@@ -164,88 +179,95 @@ io.on("connection", (socket) => {
 	})
 
 	function getNextItems(room) {
-		voteRunning = true
-		votePositiveCounter = 0
-		voteNegativeCounter = 0
-		hopCounter = 0
-		io.to(room).emit("updateVotingStats", {"needed": io.of("/").sockets.size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
-		fetchRandomArticle()
+		let g = games.get(room)
+		g.voteRunning = true
+		g.votePositiveCounter = 0
+		g.voteNegativeCounter = 0
+		g.hopCounter = 0
+		io.to(room).emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
+		fetchRandomArticle(room)
 		.then(() => {
-			startURL = `${protocol}://${host}/proxy?url=` + startURL
-			console.log("starting at: " + startURL)
-			fetchRelatedGoalArticle(startURL)
+			g.startURL = `${protocol}://${host}/proxy?url=` + g.startURL
+			console.log("starting at: " + g.startURL)
+			fetchRelatedGoalArticle(room, g.startURL)
 			.then(() => {
-				console.log("Goal is: " + endURL + ". Managed to achieve a Hop count of " + hopCounter)
-				
-				io.to(room).emit("reviewItems", endURL)
+				console.log("Goal is: " + g.endURL + ". Managed to achieve a Hop count of " + g.hopCounter)
+				io.to(room).emit("reviewItems", g.endURL)
 			})
 		})
 		.catch(err => {
 			console.error("Error starting game:", err);
 		});
+		console.log(games)
 	}
 	socket.on("getNextItems", (room) => {
 		getNextItems(room)
 	})
 
 	socket.on("closeGame", (room) => {
-		gameRunning = false;
+		let g = games.get(room)
+		g.gameRunning = false;
 		io.to(room).emit("closeGameOnClients")
 	})
 
 	socket.on('UserFinished', (room, user, linksClicked) => {
+		console.log("uf: " + room)
+		let g = games.get(room)
 		console.log(user + " has finished")
-		updateScoreboardDB(user, linksClicked)
-		io.to(room).emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
+		updateScoreboardDB(room, user, linksClicked)
+		io.to(room).emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
   	}); 
 
 	socket.on("voteUseItem", (room, vote, username) => {
-		const needed = io.of("/").sockets.size / 2
+		const needed = io.sockets.adapter.rooms.get(room).size / 2
+		let g = games.get(room)
+		if (!g.userVoteList.includes(username)) {
+			g.userVoteList.push(username)
+			vote ? g.votePositiveCounter++ : g.voteNegativeCounter++
 
-		if (!userVoteList.includes(username)) {
-			userVoteList.push(username)
-			vote ? votePositiveCounter++ : voteNegativeCounter++
+			io.to(room).emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size, "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
 
-			io.to(room).emit("updateVotingStats", {"needed": io.of("/").sockets.size, "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
-
-			if (votePositiveCounter >= needed) {
-				finishedUsers = []
-				timeStamps = []
-				linksClickedList = []
-				userVoteList = []
-				hopCounter = 0
-				votePositiveCounter = 0
-				voteNegativeCounter = 0
-				io.to(room).emit("starting", {"startURL": startURL, "endURL": endURL})
-				startTime = Date.now();
-				gameRunning = true;
-				voteRunning = false;
-			}else if (voteNegativeCounter > needed) {
-				userVoteList = []
-				getNextItems()
+			if (g.votePositiveCounter >= needed) {
+				g.finishedUsers = []
+				g.timeStamps = []
+				g.linksClickedList = []
+				g.userVoteList = []
+				g.hopCounter = 0
+				g.votePositiveCounter = 0
+				g.voteNegativeCounter = 0
+				io.to(room).emit("starting", {"startURL": g.startURL, "endURL": g.endURL})
+				g.startTime = Date.now();
+				g.gameRunning = true;
+				g.voteRunning = false;
+			}else if (g.voteNegativeCounter > needed) {
+				g.userVoteList = []
+				getNextItems(room)
 			}
 			else{
-				console.log(`${votePositiveCounter} voted positive, ${needed - votePositiveCounter} more votes needed!`)
+				console.log(`${g.votePositiveCounter} voted positive, ${needed - g.votePositiveCounter} more votes needed!`)
 			}
 		}
 	})
 });
 
-function updateScoreboardDB(user, linksClicked) {
+function updateScoreboardDB(room, user, linksClicked) {
+	console.log(room)
+	let g = games.get(room)
+	console.log(games)
 	let alreadyFound = false
-	finishedUsers.forEach(function (item, index) {
+	g.finishedUsers.forEach(function (item, index) {
 		if (item == user) {
-			linksClickedList[index] = linksClicked
+			g.linksClickedList[index] = linksClicked
 			const ms = Date.now() - startTime;
-			timeStamps[index] = ms
+			g.timeStamps[index] = ms
 			alreadyFound = true
 		}
 	});
 	if (!alreadyFound) {
-		finishedUsers.push(user)
-		linksClickedList.push(linksClicked)
-		const ms = Date.now() - startTime;
-		timeStamps.push(ms)
+		g.finishedUsers.push(user)
+		g.linksClickedList.push(linksClicked)
+		const ms = Date.now() - g.startTime;
+		g.timeStamps.push(ms)
 	}
 }
 
