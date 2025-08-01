@@ -8,13 +8,22 @@ const cheerio = require('cheerio');
 const app = express();
 const config = require('config');
 const fs = require('fs');
+const pino = require('pino')
+
+const logger = pino({
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true
+    }
+  }
+})
 
 // config
 const port = config.get('server.port');
 const proxyPort = config.get('server.proxyPort')
 const host = config.get('server.host');
 const protocol = (config.get("server.encrypted")) ? "https" : "http";
-
 let maxHops = config.get('game.hopTarget');
 
 
@@ -45,7 +54,7 @@ function getGame(room) {
 	try {
 		game = games.get(room)
 	}catch {
-		console.log(`Accessing uninitialized Game Room ${room}. Returning default`)
+		logger.warn(`Accessing uninitialized Game Room ${room}. Returning default`)
 	}
 	return game
 }
@@ -58,10 +67,10 @@ app.use('/public',express.static('public'));
 app.use(favicon(__dirname + '/public/assets/favicon.ico'));
 app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __dirname })});
 app.get('/admin', (_, res) => {res.sendFile('/public/html/admin.html', {root: __dirname })});
-app.listen(port, () => {console.log(`App listening on port ${port}!`)});
-console.log("Protocol: " + protocol)
-console.log("Host: " + host)
-console.log("Proxy Port: " + proxyPort)
+app.listen(port, () => {logger.info(`App listening on port ${port}!`)});
+logger.info("Protocol: " + protocol)
+logger.info("Host: " + host)
+logger.info("Proxy Port: " + proxyPort)
 
 function createRoom() {
   while (true){
@@ -87,18 +96,17 @@ function fetchRandomArticle(room) {
 				resolve(g.startURL)
 			})
 			.catch(err => {
-				console.error("Error fetching random article:", err);
+				logger.error("Error fetching random article:", err);
 				reject(err);
 			});
 	});
 }
 
 function fetchRelatedGoalArticle(room, URL) {
-	console.log(URL)
 	let g = getGame(room)
 	return new Promise((resolve, reject) => {
 		let articles = [];
-		console.log("URL: " + URL);
+		logger.trace("URL: " + URL);
 		
 		fetch(URL)
 			.then(res => res.text())
@@ -128,7 +136,7 @@ function fetchRelatedGoalArticle(room, URL) {
 					const rand = Math.floor(Math.random() * articles.length);
 					const article = articles[rand];
 
-					console.log(`Found ${articles.length} articles`);
+					logger.info(`Found ${articles.length} articles. Using ${article}`);
 
 					if (g.hopCounter < maxHops) {
 						g.hopCounter++;
@@ -143,7 +151,7 @@ function fetchRelatedGoalArticle(room, URL) {
 				}
 			})
 			.catch(err => {
-				console.error("Fetch error:", err);
+				logger.fatal("Fetch error:", err);
 				reject(err);
 			});
 	});
@@ -154,7 +162,7 @@ function fetchRelatedGoalArticle(room, URL) {
 io.on("connection", (socket) => {
 	socket.on("createLobby", (callback) => {
 		const roomCode = createRoom().toString()
-		console.log(roomCode)
+		logger.debug(roomCode)
 		activeRooms.push(roomCode)  	
 		games.set(roomCode, new Game())
 		socket.join(roomCode)
@@ -165,8 +173,8 @@ io.on("connection", (socket) => {
 	socket.on("joinLobby", (room, callback) => {
 		success = true
 		activeRooms.includes(room) ? socket.join(room) : success = false
-		console.log("rooms" + activeRooms)
-		console.log("room:" + room)
+		logger.debug("rooms" + activeRooms)
+		logger.debug("room:" + room)
 		callback({
       		status: success
     	});
@@ -198,17 +206,17 @@ io.on("connection", (socket) => {
 		fetchRandomArticle(room)
 		.then(() => {
 			g.startURL = `${protocol}://${host}/proxy?url=` + g.startURL
-			console.log("starting at: " + g.startURL)
+			logger.debug("starting at: " + g.startURL)
 			fetchRelatedGoalArticle(room, g.startURL)
 			.then(() => {
-				console.log("Goal is: " + g.endURL + ". Managed to achieve a Hop count of " + g.hopCounter)
+				logger.debug("Goal is: " + g.endURL + ". Managed to achieve a Hop count of " + g.hopCounter)
 				io.to(room).emit("reviewItems", g.endURL)
 			})
 		})
 		.catch(err => {
-			console.error("Error starting game:", err);
+			logger.fatal("Error starting game:", err);
 		});
-		console.log(games)
+		logger.debug(games)
 	}
 	socket.on("getNextItems", (room) => {
 		getNextItems(room)
@@ -221,9 +229,8 @@ io.on("connection", (socket) => {
 	})
 
 	socket.on('UserFinished', (room, user, linksClicked) => {
-		console.log("uf: " + room)
 		let g = getGame(room)
-		console.log(user + " has finished")
+		logger.info(user + " has finished")
 		updateScoreboardDB(room, user, linksClicked)
 		io.to(room).emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
   	}); 
@@ -254,16 +261,15 @@ io.on("connection", (socket) => {
 				getNextItems(room)
 			}
 			else{
-				console.log(`${g.votePositiveCounter} voted positive, ${needed - g.votePositiveCounter} more votes needed!`)
+				logger.info(`${g.votePositiveCounter} voted positive, ${needed - g.votePositiveCounter} more votes needed!`)
 			}
 		}
 	})
 });
 
 function updateScoreboardDB(room, user, linksClicked) {
-	console.log(room)
+	logger.trace(room)
 	let g = getGame(room)
-	console.log(games)
 	let alreadyFound = false
 	g.finishedUsers.forEach(function (item, index) {
 		if (item == user) {

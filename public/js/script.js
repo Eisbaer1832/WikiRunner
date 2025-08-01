@@ -77,7 +77,7 @@ function setupIframe(startURL) {
 
 function displayReview(endURL) {
 	fetchPageTitle(endURL).then(title=> {
-		previewLabel.innerHTML = `Ziel: ${title}`
+		previewLabel.innerHTML = `Ziel: <p class="is-funky2">${title}</p>`
 		ButtonLevelStates("Level2")
 	})
 }
@@ -106,7 +106,7 @@ function ScreenState(state, room = "???") {
 			roomSelect.classList.add("disabled")
 			console.log("lobby" + room)
 			console.log(waitingText)
-			waitingText.innerHTML = `Du befindest dich im Raum <p class="is-funky2">${room}</p>`
+			waitingText.innerHTML = `Raumcode: ${room}`
 			usernameText.innerHTML= `Du bist angemeldet als <p class="is-funky">${username} </p>`
 			break;
 		case "running":

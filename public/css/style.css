@@ -34,7 +34,7 @@
 	        background-clip: text;
 	color: transparent;
 	font: 900 clamp(1em, 5vw, 5em) exo, sans-serif;
-	animation: shimmer 2s linear infinite
+	animation: shimmer 2s linear infinite;
 }
 
 .is-funky2 {
@@ -45,7 +45,9 @@
 	        background-clip: text;
 	color: transparent;
 	font: 900 clamp(1em, 5vw, 5em) exo, sans-serif;
-	animation: shimmer 2s linear infinite
+	animation: shimmer 2s linear infinite;
+	font-size: 2rem;
+
 }
 
 

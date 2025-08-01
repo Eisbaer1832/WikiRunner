@@ -26,37 +26,43 @@
     </nav>
     <iframe id="wikiFrame" class="wikipedia" src="http://127.0.0.1:9876/proxy?url=https://de.wikipedia.org/" ></iframe> 
 
-    <div id="roomSelect" class="outerCenter">
-        <div class="card box m-3 w-content">
-            <p class="card-content title is-centered no-mb" >Wilkommen bei  <p class="is-funky2 is-centered"> Wikirunner !</p></p>
-            <div class="card box m-3" style="width:auto">
-                <div class="outerCenter"><button class="button  is-medium m-1 is-centered" onclick="createLobby()">Lobby erstellen</button></div>
-                    <p class="has-text-danger disabled" id="lobbyError">Dise Lobby existiert nicht!</p>
-                <div class="level">
-                    <input class="input is-normal " type="text" placeholder="Raumcode" id="roomInput"/>
-                    <div class="outerCenter" ><button class=" button is-normal is-centered" onclick="joinLobby()">Lobby Beitreten</button></div>
-
-                </div>
+    <div id="roomSelect" >
+        <section class="m-3 hero">
+            <p class="card-content title is-centered no-mb" >Wilkommen bei  <p style="font-size: 3rem;" class=" is-funky2 is-centered"> Wikirunner !</p></p>
+        </section>
+        <div class="outerCenter">
+            <div class="box card m-3 is-centered" >
+                <div class="outerCenter "><button class="button  is-medium m-1 is-centered" onclick="createLobby()">Lobby erstellen</button></div>
+                <p class="has-text-danger disabled" id="lobbyError">Dise Lobby existiert nicht!</p>                
+            </div>
+        </div>
+        <div class="outerCenter">
+            <div class="box m-3">
+                <p>Lobby beitreten</p>
+                <input class="input is-normal level-item" type="text" placeholder="Raumcode" id="roomInput"/>
+                <button style="width: 100%;"class="button is-normal is-centered" onclick="joinLobby()"><i class="fa-solid fa-check"></i></button>
                 
             </div>
         </div>
     </div>
     <div id="waitingScreen" >
-        <div class="outerCenter">
-            <div class="card box m-3 w-content">
-                <p class="card-content title is-centered no-mb" id="waitingText">Wilkommen bei Wikirunner</p>
-                <p class="card-content is-centered" id="previewLabel">Worum wird es wohl gehen 🤔</p>
-                <div class="outerCenter" id="buttonLevel1"><button class="button is-success is-medium" onclick="getNextItems()"> Spiel Starten</button></div>
-                <div id="buttonLevel2">
-                    <div class="progressBarContainer m-1"><div class="bar red"></div></div>
-                    <div class="progressBarContainer m-1"><div class="bar green"></div></div>
-                    <div class="outerCenter">
-                        <button class="button is-success is-medium m-1 " onclick="voteUseItem(false)"> Ein anderer Begriff</button>
-                        <button class="button is-success is-medium m-1" onclick="voteUseItem(true)">Spiel Starten</button>
+            <section class="m-3  no-mb">
+                <p class="hero-body subtitle is-4 is-centered " id="waitingText">Wilkommen bei Wikirunner</p>
+            </section>
+            <div class="outerCenter">
+                <div class="card box m-3 w-content">
+                    <p class="card-content is-centered" id="previewLabel">Worum wird es wohl gehen 🤔</p>
+                    <div class="outerCenter" id="buttonLevel1"><button class="button is-success is-medium" onclick="getNextItems()"> Spiel Starten</button></div>
+                    <div id="buttonLevel2">
+                        <div class="progressBarContainer m-1"><div class="bar red"></div></div>
+                        <div class="progressBarContainer m-1"><div class="bar green"></div></div>
+                        <div class="outerCenter">
+                            <button class="button is-danger is-medium m-1 " onclick="voteUseItem(false)"> <i class="fas fa-thumbs-down"></i></button>
+                            <button class="button is-success is-medium m-1" onclick="voteUseItem(true)"><i class="fas fa-thumbs-up"></i></button>
+                        </div>
                     </div>
-                </div>
+                 </div>
             </div>
-        </div>
         <div class="outerCenter">
             <div class="card box m-3">
                 <p class="card-content  title is-centered" id="usernameText">
@@ -95,7 +101,7 @@
     </div>
     <!--END Login modal-->
 </body>
-<script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+<script defer src="https://use.fontawesome.com/releases/v7.0.0/js/all.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="/public/js/socket.io.js" ></script>
 <script src="/public/js/websocket.js"></script>
