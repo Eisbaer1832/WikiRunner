@@ -40,6 +40,16 @@ class Game {
 
 }
 
+function getGame(room) {
+	let game = new Game()
+	try {
+		game = games.get(room)
+	}catch {
+		console.log(`Accessing uninitialized Game Room ${room}. Returning default`)
+	}
+	return game
+}
+
 app.use(bodyParser.urlencoded({
   extended: true
 }));
@@ -62,7 +72,7 @@ function createRoom() {
   }
 }
 function fetchRandomArticle(room) {
-	let g = games.get(room)
+	let g = getGame(room)
 	return new Promise((resolve, reject) => {
 		const URL = "https://de.wikipedia.org/api/rest_v1/page/random/summary"
 		fetch(URL)
@@ -85,7 +95,7 @@ function fetchRandomArticle(room) {
 
 function fetchRelatedGoalArticle(room, URL) {
 	console.log(URL)
-	let g = games.get(room)
+	let g = getGame(room)
 	return new Promise((resolve, reject) => {
 		let articles = [];
 		console.log("URL: " + URL);
@@ -179,7 +189,7 @@ io.on("connection", (socket) => {
 	})
 
 	function getNextItems(room) {
-		let g = games.get(room)
+		let g = getGame(room)
 		g.voteRunning = true
 		g.votePositiveCounter = 0
 		g.voteNegativeCounter = 0
@@ -205,14 +215,14 @@ io.on("connection", (socket) => {
 	})
 
 	socket.on("closeGame", (room) => {
-		let g = games.get(room)
+		let g = getGame(room)
 		g.gameRunning = false;
 		io.to(room).emit("closeGameOnClients")
 	})
 
 	socket.on('UserFinished', (room, user, linksClicked) => {
 		console.log("uf: " + room)
-		let g = games.get(room)
+		let g = getGame(room)
 		console.log(user + " has finished")
 		updateScoreboardDB(room, user, linksClicked)
 		io.to(room).emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
@@ -220,7 +230,7 @@ io.on("connection", (socket) => {
 
 	socket.on("voteUseItem", (room, vote, username) => {
 		const needed = io.sockets.adapter.rooms.get(room).size / 2
-		let g = games.get(room)
+		let g = getGame(room)
 		if (!g.userVoteList.includes(username)) {
 			g.userVoteList.push(username)
 			vote ? g.votePositiveCounter++ : g.voteNegativeCounter++
@@ -252,7 +262,7 @@ io.on("connection", (socket) => {
 
 function updateScoreboardDB(room, user, linksClicked) {
 	console.log(room)
-	let g = games.get(room)
+	let g = getGame(room)
 	console.log(games)
 	let alreadyFound = false
 	g.finishedUsers.forEach(function (item, index) {
