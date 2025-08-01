@@ -166,7 +166,7 @@ function displayScores(names, times, linksClickedList) {
             	name  +
 			"<br>" +
 			"<span class='icon'><i class='fas fa-list' aria-hidden='true'></i></span>" +
-				linksClickedList +
+				linksClickedList[i] +
         	"</a>");
 	});
 }
