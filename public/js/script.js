@@ -10,11 +10,19 @@ const previewLabel = document.getElementById("previewLabel")
 const buttonLevel1 = document.getElementById("buttonLevel1")
 const buttonLevel2 = document.getElementById("buttonLevel2")
 const roomSelect = document.getElementById("roomSelect")
-
-
+const exitBtn = document.getElementById("exitBtn")
+rememberedRoom = 0
 localStorage.setItem("URLtoCheck", wikiFrame.src)
 let linksClicked = []
 let endURL = ""
+
+$(document).ready(function() {
+  $(".navbar-burger").click(function() {
+      $(".navbar-burger").toggleClass("is-active");
+      $(".navbar-menu").toggleClass("is-active");
+  });
+});
+
 
 function fetchPageTitle(argURL) {
     return new Promise((resolve, reject) => {
@@ -49,7 +57,7 @@ function closeModal($el) {
     username = $("#loginInput").val()
     localStorage.setItem("username", username);
     $el.classList.remove('is-active');
-	ScreenState("lobby")
+	ScreenState("roomSelect")
 }
 
 function resetUName() {
@@ -72,6 +80,11 @@ function gameStarted() {
 
 function setupIframe(startURL) {
 	wikiFrame.src = startURL
+	
+	fetchPageTitle(startURL).then(title => {
+		linksClicked.push(title)
+	})
+	
 	console.log(wikiFrame.src);
 }
 
@@ -82,9 +95,8 @@ function displayReview(endURL) {
 	})
 }
 function updatVotes(positive, negative, needed) {
-	const bar = document.querySelectorAll('.bar');
-	bar[0].style.width = `${negative /needed * 100}%`;
-	bar[1].style.width = `${positive /needed * 100}%`;
+	const voteIndicator = document.getElementById("voteIndicator");
+	voteIndicator.innerHTML = positive + "/" + needed
 
 }
 
@@ -96,18 +108,22 @@ function ScreenState(state, room = "???") {
 			targetLabel.classList.add("disabled")
 			statBlock.classList.add("disabled")
 			roomSelect.classList.remove("disabled")
+			usernameText.innerHTML= `Nutzername: ${username}`
 			break;
 
 		case "lobby":
+			rememberedRoom = room
 			wikiFrame.classList.add("disabled")
 			waitingScreen.classList.remove("disabled")
 			targetLabel.classList.add("disabled")
 			statBlock.classList.add("disabled")
 			roomSelect.classList.add("disabled")
 			console.log("lobby" + room)
-			console.log(waitingText)
 			waitingText.innerHTML = `Raumcode: ${room}`
-			usernameText.innerHTML= `Du bist angemeldet als <p class="is-funky">${username} </p>`
+			usernameText.innerHTML= `Nutzername: ${username}`
+			exitBtn.onclick = function(){ScreenState("roomSelect")}; 
+			console.log(exitBtn)
+
 			break;
 		case "running":
 			targetLabel.classList.remove("disabled")
@@ -115,6 +131,7 @@ function ScreenState(state, room = "???") {
 			waitingScreen.classList.add("disabled")
 			statBlock.classList.add("disabled")
 			roomSelect.classList.add("disabled")
+			exitBtn.onclick = function(){remoteFinished(linksClicked, false); ScreenState("finished")}; 
 			break;
 		case "finished":
 			fetchPageTitle(endURL).then(title=> {
@@ -126,6 +143,7 @@ function ScreenState(state, room = "???") {
 			waitingScreen.classList.remove("disabled")
 			statBlock.classList.remove("disabled")
 			roomSelect.classList.add("disabled")
+			exitBtn.onclick = function(){ScreenState("lobby", rememberedRoom)}; 
 			break;
 		}
 }
@@ -139,17 +157,12 @@ function ButtonLevelStates(state) {
 		case "Level2":
 			buttonLevel1.classList.add("disabled")
 			buttonLevel2.classList.remove("disabled")
-			Array.from(buttonLevel2.children[2].children).forEach(element =>  {
-				element.removeAttribute("disabled");
-			})
 
 			break;
 		case "disabledVoteUI":
 			buttonLevel1.classList.add("disabled")
 			buttonLevel2.classList.remove("disabled")
-			Array.from(buttonLevel2.children[2].children).forEach(element =>  {
-				element.setAttribute("disabled", "disabled");
-			})
+
 	}
 		
 }
@@ -160,7 +173,7 @@ function displayScores(names, times, linksClickedList) {
 		$('#statsInsert').append("" +
 			"<a class='panel-block is-active'> " +
     		"<span class='icon'><i class='fas fa-clock' aria-hidden='true'></i></span>" +
-				times[i] / 1000 + " Sekunden" + 
+				times[i] + " Sekunden" + 
 				" - " +
     		"<span class='icon'><i class='fas fa-user' aria-hidden='true'></i></span>" +
             	name  +
@@ -190,13 +203,23 @@ function main() {
 			let url = localStorage.getItem(event.key)
 			let urlArray = url.split("/")
 			fetchPageTitle(urlArray[urlArray.length -1 ]).then( title => {
-				linksClicked.push(title)
+				if (title != linksClicked[linksClicked.length - 1]) {
+					linksClicked.push(title)
+				}
 			})
 			if (url == localStorage.getItem("target")) {
 				console.log("finished")
-				localStorage.setItem("finished", true)
-				ScreenState("finished")
-				remoteFinished(linksClicked)
+				console.log(url)
+				fetchPageTitle(url).then(title => {
+					if (title != linksClicked[linksClicked.length - 1]) {
+						linksClicked.push(title)
+					}
+					console.log(linksClicked)
+					remoteFinished(linksClicked)
+					localStorage.setItem("finished", true)
+					ScreenState("finished")
+				})
+		
 			}
 		}
 	});

@@ -72,9 +72,9 @@ socket.on("closeGameOnClients", endURL => {
 	ButtonLevelStates("Level1")
 });
 
-function remoteFinished(linksClicked) {
+function remoteFinished(linksClicked, success = true) {
 	console.log("room " + room)
-	socket.emit("UserFinished", room, localStorage.getItem("username"), linksClicked);
+	socket.emit("UserFinished", room, localStorage.getItem("username"), linksClicked, success);
 }
 
 

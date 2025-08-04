@@ -8,7 +8,8 @@ const cheerio = require('cheerio');
 const app = express();
 const config = require('config');
 const fs = require('fs');
-const pino = require('pino')
+const pino = require('pino');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const logger = pino({
   transport: {
@@ -80,6 +81,33 @@ function createRoom() {
     }
   }
 }
+
+
+
+function fetchPageTitle(argURL) {
+    return new Promise((resolve, reject) => {
+        let title = argURL.split("/");
+        title = title[title.length - 1];
+
+        const URL = "https://api.wikimedia.org/core/v1/wikipedia/de/page/" + title;
+
+        fetch(URL)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                resolve(data.title); // Return the title when ready
+            })
+            .catch(err => {
+                console.error("Error fetching page title:", err);
+                reject(err);
+            });
+    });
+}
+
 function fetchRandomArticle(room) {
 	let g = getGame(room)
 	return new Promise((resolve, reject) => {
@@ -228,10 +256,10 @@ io.on("connection", (socket) => {
 		io.to(room).emit("closeGameOnClients")
 	})
 
-	socket.on('UserFinished', (room, user, linksClicked) => {
+	socket.on('UserFinished', (room, user, linksClicked, success = true) => {
 		let g = getGame(room)
 		logger.info(user + " has finished")
-		updateScoreboardDB(room, user, linksClicked)
+		updateScoreboardDB(room, user, linksClicked, success)
 		io.to(room).emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
   	}); 
 
@@ -267,14 +295,22 @@ io.on("connection", (socket) => {
 	})
 });
 
-function updateScoreboardDB(room, user, linksClicked) {
-	logger.trace(room)
+function updateScoreboardDB(room, user, linksClicked, success) {
+	console.log(room)
 	let g = getGame(room)
 	let alreadyFound = false
+	let ms = 0
+
+	console.log(g)
+	if (success) {
+		ms = (Date.now() - g.startTime)  / 1000;
+	}else{
+		ms = "DNF"
+	}
+	console.log(ms)
 	g.finishedUsers.forEach(function (item, index) {
 		if (item == user) {
 			g.linksClickedList[index] = linksClicked
-			const ms = Date.now() - startTime;
 			g.timeStamps[index] = ms
 			alreadyFound = true
 		}
@@ -282,7 +318,6 @@ function updateScoreboardDB(room, user, linksClicked) {
 	if (!alreadyFound) {
 		g.finishedUsers.push(user)
 		g.linksClickedList.push(linksClicked)
-		const ms = Date.now() - g.startTime;
 		g.timeStamps.push(ms)
 	}
 }

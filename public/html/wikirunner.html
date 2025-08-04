@@ -11,16 +11,29 @@
 </head>
 <body>
     <!--START navbar-->
-    <nav class="navbar is-transparent" role="navigation" >
-        <a class="navbar-item" style="margin-right: 0 !important;"><h1>🏃🏻‍➡️ WikiRunner</h1></a>
-        <div class="navbar-end">
-            <div class="outerCenter">
-                <div class="navbar-item">
-                    <button class="button is-light" onclick="closeGame()"> 
-                        <span class='icon'><i class='fas fa-door-open' ></i></span>
-                    </button>
-                    <span class="tag  is-medium " id="targetLabel"></span>
+    <nav class="navbar  mb-1" role="navigation" >
+        <div class="navbar-brand">
+            <a class="navbar-item" style="margin-right: 0 !important;"><h1>🏃🏻‍➡️ WikiRunner</h1></a>
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        
+        <div class="navbar-start">
+            <span class="navbar-item  " id="targetLabel"></span>
+        </div>      
+        <div class="navbar-menu" id="navbarMenu">
+            <div class="navbar-end">
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <p class="navbar-link" id="usernameText"> Wer bist du?</p>
+                    <div class="navbar-dropdown ">
+                        <button class="navbar-item " onclick="resetUName()">Neuer Nutzername</button>
+                    </div>
                 </div>
+                <button class="navbar-item  is-light" id="exitBtn"><span class='icon'><i class='fas fa-door-open' ></i></span></button>
             </div>
         </div>
     </nav>
@@ -46,16 +59,18 @@
         </div>
     </div>
     <div id="waitingScreen" >
-            <section class="m-3  no-mb">
-                <p class="hero-body subtitle is-4 is-centered " id="waitingText">Wilkommen bei Wikirunner</p>
+            <section class="outerCenter">
+                <span class="tag lobby-box is-centered is-large" id="waitingText">Wilkommen bei Wikirunner</span>
             </section>
+
             <div class="outerCenter">
-                <div class="card box m-3 w-content">
+                <div class="card box m-3 lobby-box">
                     <p class="card-content is-centered" id="previewLabel">Worum wird es wohl gehen 🤔</p>
                     <div class="outerCenter" id="buttonLevel1"><button class="button is-success is-medium" onclick="getNextItems()"> Spiel Starten</button></div>
                     <div id="buttonLevel2">
-                        <div class="progressBarContainer m-1"><div class="bar red"></div></div>
-                        <div class="progressBarContainer m-1"><div class="bar green"></div></div>
+                        <div class="outerCenter">
+                            <span id="voteIndicator" class="tag is-success is-centered">0/0</span>
+                        </div>
                         <div class="outerCenter">
                             <button class="button is-danger is-medium m-1 " onclick="voteUseItem(false)"> <i class="fas fa-thumbs-down"></i></button>
                             <button class="button is-success is-medium m-1" onclick="voteUseItem(true)"><i class="fas fa-thumbs-up"></i></button>
@@ -64,15 +79,7 @@
                  </div>
             </div>
         <div class="outerCenter">
-            <div class="card box m-3">
-                <p class="card-content  title is-centered" id="usernameText">
-                    Wer bist du?
-                </p>
-                <div class="outerCenter"><button class="button is-danger is-medium" onclick="resetUName()">Gleich nicht mehr!</button></div>
-            </div>
-        </div>
-        <div class="outerCenter">
-            <div id="statBlock" class="is-centered">
+            <div id="statBlock" class="lobby-box is-centered">
                 <article class="panel is-info m-3">
                     <p class="panel-heading">Scoreboard</p>
                     <div id="statsInsert"></div>
