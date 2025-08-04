@@ -35,7 +35,7 @@ const games = new Map();
 class Game {
 	startTime = 0
 	ScreenState = "lobby"
-	voteRunning = false //deprecated
+	voteRunning = false
 	finishedUsers = []
 	timeStamps = []
 	linksClickedList = []
@@ -45,7 +45,6 @@ class Game {
 	hopCounter = 0
 	startURL
 	endURL
-
 	constructor() {}
 
 }
@@ -82,31 +81,6 @@ function createRoom() {
   }
 }
 
-
-
-function fetchPageTitle(argURL) {
-    return new Promise((resolve, reject) => {
-        let title = argURL.split("/");
-        title = title[title.length - 1];
-
-        const URL = "https://api.wikimedia.org/core/v1/wikipedia/de/page/" + title;
-
-        fetch(URL)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                resolve(data.title); // Return the title when ready
-            })
-            .catch(err => {
-                console.error("Error fetching page title:", err);
-                reject(err);
-            });
-    });
-}
 
 function fetchRandomArticle(room) {
 	let g = getGame(room)
@@ -199,12 +173,17 @@ io.on("connection", (socket) => {
     	});
 	})
 	socket.on("joinLobby", (room, callback) => {
+		let g = getGame(room)
 		success = true
 		activeRooms.includes(room) ? socket.join(room) : success = false
 		logger.debug("rooms" + activeRooms)
 		logger.debug("room:" + room)
 		callback({
-      		status: success
+      		status: success,
+			voting: g.voteRunning,
+			ScreenState: g.ScreenState,
+			startURL:g.startURL,
+			endURL: g.endURL
     	});
 	})
 
@@ -260,6 +239,7 @@ io.on("connection", (socket) => {
 		let g = getGame(room)
 		logger.info(user + " has finished")
 		updateScoreboardDB(room, user, linksClicked, success)
+		io.to(room).emit("finishNotification", user, linksClicked.length)
 		io.to(room).emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
   	}); 
 
@@ -270,9 +250,9 @@ io.on("connection", (socket) => {
 			g.userVoteList.push(username)
 			vote ? g.votePositiveCounter++ : g.voteNegativeCounter++
 
-			io.to(room).emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size, "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
+			io.to(room).emit("updateVotingStats", {"needed": needed, "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
 
-			if (g.votePositiveCounter >= needed) {
+			if (g.votePositiveCounter >=  needed) {
 				g.finishedUsers = []
 				g.timeStamps = []
 				g.linksClickedList = []

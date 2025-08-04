@@ -24,7 +24,6 @@ $(document).ready(function() {
   });
 });
 
-
 function fetchPageTitle(argURL) {
     return new Promise((resolve, reject) => {
         let title = argURL.split("/");
@@ -67,15 +66,12 @@ function resetUName() {
 }
 
 function gameStarted() {
-	console.log("gameStarted")
 	linksClicked=[]
 	localStorage.setItem("finished", false)
 	endURL = localStorage.getItem("target")
-	console.log("getting " + endURL)
 	fetchPageTitle(endURL).then(title=> {
 		targetLabel.innerHTML = "🏁  Ziel: " + "<strong>" + title  + "</strong>" + "🏁"
 	})
-
 	ScreenState("running")
 }
 
@@ -151,7 +147,7 @@ function ScreenState(state, room = "???") {
 		}
 }
 
-function voting(state) {
+function voting(state, allreadyVoted = false) {
 	switch(state) {
 		case false:
 			buttonLevel1.classList.remove("disabled")
@@ -160,10 +156,19 @@ function voting(state) {
 		case true:
 			buttonLevel1.classList.add("disabled")
 			buttonLevel2.classList.remove("disabled")
+
+			Array.from(buttonLevel2.children[1].children).forEach(element => {
+			allreadyVoted
+				? element.setAttribute("disabled", "disabled")
+				: element.removeAttribute("disabled");
+			});
 			break;
+
 	}
-		
 }
+
+
+
 
 function displayScores(names, times, linksClickedList) {
 	document.getElementById("statsInsert").innerHTML = ""

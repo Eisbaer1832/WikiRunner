@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/public/css/style.css" >
     <link rel="stylesheet" href="/public/css/progressBar.css">
     <link rel="stylesheet"href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="/public/css/bulma-notification.css">
 
 </head>
 <body>
@@ -59,7 +60,7 @@
         </div>
     </div>
     <div id="waitingScreen" >
-            <section class="level">
+            <section class="level" style="flex-direction: column;">
                 <span class="tag lobby-box is-centered level-item is-large" id="codeText">???</span>
                 <p class="breakliner tag lobby-box is-centered level-item is-large" id="waitingText">Wilkommen bei Wikirunner</p>
             </section>
@@ -108,10 +109,12 @@
     </div>
     </div>
     <!--END Login modal-->
+
 </body>
 <script defer src="https://use.fontawesome.com/releases/v7.0.0/js/all.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="/public/js/socket.io.js" ></script>
+<script src="/public/js/bulma-notifications.js"></script>
 <script src="/public/js/websocket.js"></script>
 <script src="/public/js/script.js"></script>
 </html>

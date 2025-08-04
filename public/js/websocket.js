@@ -17,8 +17,20 @@ function joinLobby() {
 	console.log(room)
 	socket.emit("joinLobby", room, (response) => {
 		if (response.status) {
-				voting(false)
-				ScreenState("lobby", room)
+				if(response.ScreenState == "running") {
+					console.log(response)
+					localStorage.setItem("allreadyVoted", false)
+					setupIframe(response.startURL)
+					localStorage.setItem("target", response.endURL)
+					gameStarted()
+				}else {
+					displayReview(response.endURL)
+					voting(response.voting)
+				}				
+				document.getElementById("codeText").innerHTML = `Raumcode: ${room}`
+				ScreenState(response.ScreenState, room)
+
+
 		}else {
 			document.getElementById("lobbyError").classList.remove("disabled")
 			console.log("Unable to join")
@@ -71,6 +83,13 @@ socket.on("closeGameOnClients", endURL => {
 	ScreenState("roomSelect")
 	voting(false)
 });
+socket.on("finishNotification", (user, length) => {
+	console.log(`${user} finished with ${length} clicks`)
+	notif = new BulmaNotification();
+	notif.show(`${user} ist fertig!`, `Er brauchte ${length} Klicks`, "success", 5000);
+
+})
+
 
 function remoteFinished(linksClicked, success = true) {
 	console.log("room " + room)
@@ -90,7 +109,7 @@ function startGame() {
 
 
 function voteUseItem(vote) {
-	voting(false)
+	voting(true, true)
 	localStorage.setItem("allreadyVoted", true)
 	socket.emit("voteUseItem", room, vote, localStorage.getItem("username"))
 }
