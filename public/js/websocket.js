@@ -4,7 +4,7 @@ socket.on("connect", () => {});
 
 
 function createLobby() {
-	ButtonLevelStates("Level1")
+	voting(false)
 	socket.emit("createLobby", (response) => {
 		room = response.room
 		ScreenState("lobby", room)
@@ -17,7 +17,7 @@ function joinLobby() {
 	console.log(room)
 	socket.emit("joinLobby", room, (response) => {
 		if (response.status) {
-				ButtonLevelStates("Level1")
+				voting(false)
 				ScreenState("lobby", room)
 		}else {
 			document.getElementById("lobbyError").classList.remove("disabled")
@@ -53,7 +53,7 @@ socket.on("updateScoreBoard", ({users, times, linksClickedList}) => {
 
 socket.on("reviewItems", endURL => {
 	localStorage.setItem("allreadyVoted", false)
-	ButtonLevelStates("Level2")
+	voting(true)
 	console.log("reviewItems")
 	displayReview(endURL)
 });
@@ -69,7 +69,7 @@ socket.on("updateVotingStats",({needed, positive, negative}) => {
 
 socket.on("closeGameOnClients", endURL => {
 	ScreenState("roomSelect")
-	ButtonLevelStates("Level1")
+	voting(false)
 });
 
 function remoteFinished(linksClicked, success = true) {
@@ -90,7 +90,7 @@ function startGame() {
 
 
 function voteUseItem(vote) {
-	ButtonLevelStates("disabledVoteUI")
+	voting(false)
 	localStorage.setItem("allreadyVoted", true)
 	socket.emit("voteUseItem", room, vote, localStorage.getItem("username"))
 }

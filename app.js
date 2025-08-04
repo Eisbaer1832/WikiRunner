@@ -34,7 +34,8 @@ const games = new Map();
 
 class Game {
 	startTime = 0
-	gameRunning = false
+	ScreenState = "lobby"
+	voteRunning = false //deprecated
 	finishedUsers = []
 	timeStamps = []
 	linksClickedList = []
@@ -42,7 +43,6 @@ class Game {
 	voteNegativeCounter = 0
 	userVoteList = []
 	hopCounter = 0
-	voteRunning = false
 	startURL
 	endURL
 
@@ -211,16 +211,16 @@ io.on("connection", (socket) => {
 	
 
 	socket.on("reconnecting", (room) => {
-
-		io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps})
+		let g = getGame(room)
+		io.emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps})
 
 		if (voteRunning) {
-			io.emit("voteRunning", endURL)
-			io.emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : votePositiveCounter, "negative" : voteNegativeCounter})
+			io.emit("voteRunning", g.endURL)
+			io.emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
 		}
-		if (gameRunning) {
-			io.emit("reconnecting", {"startURL": startURL, "endURL": endURL})
-			io.emit("updateScoreBoard", {"users": finishedUsers, "times" : timeStamps, "linksClickedList" : linksClickedList})
+		if (ScreenState == "running") {
+			io.emit("reconnecting", {"startURL": g.startURL, "endURL": g.endURL})
+			io.emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
 		}	
 	})
 
@@ -252,7 +252,7 @@ io.on("connection", (socket) => {
 
 	socket.on("closeGame", (room) => {
 		let g = getGame(room)
-		g.gameRunning = false;
+		g.ScreenState = "lobby";
 		io.to(room).emit("closeGameOnClients")
 	})
 
@@ -282,7 +282,7 @@ io.on("connection", (socket) => {
 				g.voteNegativeCounter = 0
 				io.to(room).emit("starting", {"startURL": g.startURL, "endURL": g.endURL})
 				g.startTime = Date.now();
-				g.gameRunning = true;
+				g.ScreenState = "running";
 				g.voteRunning = false;
 			}else if (g.voteNegativeCounter > needed) {
 				g.userVoteList = []

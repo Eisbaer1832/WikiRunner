@@ -91,7 +91,7 @@ function setupIframe(startURL) {
 function displayReview(endURL) {
 	fetchPageTitle(endURL).then(title=> {
 		previewLabel.innerHTML = `Ziel: <p class="is-funky2">${title}</p>`
-		ButtonLevelStates("Level2")
+		voting(true)
 	})
 }
 function updatVotes(positive, negative, needed) {
@@ -137,7 +137,7 @@ function ScreenState(state, room = "???") {
 			fetchPageTitle(endURL).then(title=> {
 				waitingText.innerHTML = "Glückwunsch, du bist bei " + title + " angekommen 🎉"
 			})
-			ButtonLevelStates("Level1")
+			voting(false)
 			targetLabel.classList.remove("disabled")
 			wikiFrame.classList.add("disabled")
 			waitingScreen.classList.remove("disabled")
@@ -148,21 +148,16 @@ function ScreenState(state, room = "???") {
 		}
 }
 
-function ButtonLevelStates(state) {
+function voting(state) {
 	switch(state) {
-		case "Level1":
+		case false:
 			buttonLevel1.classList.remove("disabled")
 			buttonLevel2.classList.add("disabled")
 			break;
-		case "Level2":
+		case true:
 			buttonLevel1.classList.add("disabled")
 			buttonLevel2.classList.remove("disabled")
-
 			break;
-		case "disabledVoteUI":
-			buttonLevel1.classList.add("disabled")
-			buttonLevel2.classList.remove("disabled")
-
 	}
 		
 }
@@ -187,7 +182,7 @@ function displayScores(names, times, linksClickedList) {
 
 function main() {
 	ScreenState("roomSelect")
-	ButtonLevelStates("Level1")
+	voting(false)
 	if (!username) {
 		console.log("uname undefined")
 		openModal(loginModal)
