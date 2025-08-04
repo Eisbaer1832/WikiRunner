@@ -11,6 +11,7 @@ const buttonLevel1 = document.getElementById("buttonLevel1")
 const buttonLevel2 = document.getElementById("buttonLevel2")
 const roomSelect = document.getElementById("roomSelect")
 const exitBtn = document.getElementById("exitBtn")
+const codeText = document.getElementById("codeText")
 rememberedRoom = 0
 localStorage.setItem("URLtoCheck", wikiFrame.src)
 let linksClicked = []
@@ -105,6 +106,7 @@ function ScreenState(state, room = "???") {
 		case "roomSelect":
 			wikiFrame.classList.add("disabled")
 			waitingScreen.classList.add("disabled")
+			waitingText.classList.add("disabled")
 			targetLabel.classList.add("disabled")
 			statBlock.classList.add("disabled")
 			roomSelect.classList.remove("disabled")
@@ -115,19 +117,19 @@ function ScreenState(state, room = "???") {
 			rememberedRoom = room
 			wikiFrame.classList.add("disabled")
 			waitingScreen.classList.remove("disabled")
+			waitingText.classList.add("disabled")
 			targetLabel.classList.add("disabled")
 			statBlock.classList.add("disabled")
 			roomSelect.classList.add("disabled")
-			console.log("lobby" + room)
-			waitingText.innerHTML = `Raumcode: ${room}`
+			codeText.innerHTML = `Raumcode: ${room}`
 			usernameText.innerHTML= `Nutzername: ${username}`
 			exitBtn.onclick = function(){ScreenState("roomSelect")}; 
-			console.log(exitBtn)
-
+			
 			break;
 		case "running":
 			targetLabel.classList.remove("disabled")
 			wikiFrame.classList.remove("disabled")
+			waitingText.classList.add("disabled")
 			waitingScreen.classList.add("disabled")
 			statBlock.classList.add("disabled")
 			roomSelect.classList.add("disabled")
@@ -138,6 +140,7 @@ function ScreenState(state, room = "???") {
 				waitingText.innerHTML = "Glückwunsch, du bist bei " + title + " angekommen 🎉"
 			})
 			voting(false)
+			waitingText.classList.remove("disabled")
 			targetLabel.classList.remove("disabled")
 			wikiFrame.classList.add("disabled")
 			waitingScreen.classList.remove("disabled")

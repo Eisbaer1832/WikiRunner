@@ -50,13 +50,20 @@
 
 }
 
+.lobby-box {
+	width: 80vw;
+}
+
+.breakliner {
+	white-space: normal !important;
+	word-wrap: break-word;
+	text-align: center;
+	margin: auto;
+	padding: 2rem;
+}
 
 @keyframes shimmer { to { background-position: 100% } }
 
 
 
 
-
-.lobby-box {
-	width: 80vw;
-}
