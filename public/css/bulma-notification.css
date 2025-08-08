@@ -1,0 +1,35 @@
+.note{
+    visibility: hidden;
+    opacity:0;
+    box-shadow:0 0 15px rgba(0, 0, 0, 0.33);
+    /**width:30vw;**/
+    width: fit-content;
+    height: 10vh;
+    margin:16px auto;
+    padding: .5em 2em;
+    top:40vh;
+    right:0;
+    position:fixed;
+    transition: opacity 0.2s, top 0.2s, visibility 0.2s;
+    transition-timing-function: ease-in;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 5;
+}
+
+.note-visible{
+    top:8vh;
+    opacity: 1;
+    visibility: visible;
+}
+
+.note-title{
+    font-size: 1.5em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.note-content{
+    font-size:1em;
+}
