@@ -1,4 +1,4 @@
-var socket = io("127.0.0.1:9877");
+var socket = io("https://wikirunner.tbwebtech.de");
 let room = 0
 socket.on("connect", () => {});
 

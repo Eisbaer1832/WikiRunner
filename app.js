@@ -306,7 +306,11 @@ function updateScoreboardDB(room, user, linksClicked, success) {
 app.get('/proxy', async (req, res) => {
   const targetUrl = req.query.url;
   try {
-    const response = await axios.get(targetUrl);
+   const response = await axios.get(targetUrl, {
+      headers: {
+        'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
+      }
+    });
     const $ = cheerio.load(response.data);
     const baseUrl = new URL(targetUrl);
 
@@ -345,8 +349,13 @@ app.get('/proxy/resource', async (req, res) => {
 	if (!assetUrl) return res.status(400).send('Missing ?url param');
   		try {
     		const response = await axios.get(assetUrl, {
-      		responseType: 'arraybuffer', // handle binary data like images
-    	});
+		      headers: {
+		        'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
+		        'Referer': 'https://de.wikipedia.org/',
+		        'Accept': '*/*'
+		      },	
+	      		responseType: 'arraybuffer', // handle binary data like images
+	    	});
 
 			res.set(response.headers); // forward original headers (content-type, etc)
 			res.send(response.data);
