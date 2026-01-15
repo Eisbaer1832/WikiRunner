@@ -23,7 +23,7 @@ const logger = pino({
 // config
 const port = config.get('server.port');
 const socketPort = config.get('server.socketPort')
-const proxyPort = config.get('server.proxyPort')
+const proxyUrl = config.get('server.proxyUrl')
 const host = config.get('server.host');
 const protocol = (config.get("server.encrypted")) ? "https" : "http";
 let maxHops = config.get('game.hopTarget');
@@ -71,7 +71,7 @@ app.get('/admin', (_, res) => {res.sendFile('/public/html/admin.html', {root: __
 app.listen(port, () => {logger.info(`App listening on port ${port}!`)});
 logger.info("Protocol: " + protocol)
 logger.info("Host: " + host)
-logger.info("Proxy Port: " + proxyPort)
+logger.info("Proxy Port: " + proxyUrl)
 
 function createRoom() {
   while (true){
@@ -95,6 +95,7 @@ function fetchRandomArticle(room) {
 				return response.json();
 			})
 			.then(data => {
+				logger.debug(data)
 				g.startURL = data.content_urls.desktop.page
 				resolve(g.startURL)
 			})
@@ -219,7 +220,7 @@ io.on("connection", (socket) => {
 		io.to(room).emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
 		fetchRandomArticle(room)
 		.then(() => {
-			g.startURL = `${protocol}://${host}/proxy?url=` + g.startURL
+			g.startURL = `${protocol}://${proxyUrl}/proxy?url=` + g.startURL
 			logger.debug("starting at: " + g.startURL)
 			fetchRelatedGoalArticle(room, g.startURL)
 			.then(() => {
@@ -339,7 +340,7 @@ app.get('/proxy', async (req, res) => {
 			}else if (href.startsWith('#')) {
 				href = targetUrl + href
 			}
-			$(this).attr('href', `${protocol}://${host}/proxy?url=` + href);
+			$(this).attr('href', `${protocol}://${proxyUrl}/proxy?url=` + href);
 		} catch (err) {
 			//console.log("Proxy rewrite failed for" + $(this) + " because " + err)
 		}
