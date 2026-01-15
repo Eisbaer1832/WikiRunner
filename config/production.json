@@ -1,11 +1,14 @@
 {
 	"server": {
 	    	"host": "wikirunner.tbwebtech.de",
-    		"port": 9879,
-			"proxyPort" : 9897,
-			"encrypted": true
+	    	"port": 6660,
+		"proxyPort" : 6661,
+		"socketPort" : 6662,
+		"encrypted": false
+
 	},
-	    "game": {
-		"hopTarget" : 4
+	"game": {
+		"hopTarget" : 4,
+		"blacklist": [".jpg", ".svg","Hilfe:","Datei:","ISBN","Kategorie", "Benutzer:", "Quelle", "Impressum", "Diskussion:", "#","Wikipedia:", "Spezial:"]
 	}
 }

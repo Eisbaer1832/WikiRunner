@@ -22,13 +22,14 @@ const logger = pino({
 
 // config
 const port = config.get('server.port');
+const socketPort = config.get('server.socketPort')
 const proxyPort = config.get('server.proxyPort')
 const host = config.get('server.host');
 const protocol = (config.get("server.encrypted")) ? "https" : "http";
 let maxHops = config.get('game.hopTarget');
 
 
-const io = new Server(proxyPort, { cors: { origin: '*', credentials: true }});
+const io = new Server(socketPort, { cors: { origin: '*', credentials: true }});
 activeRooms = []
 const games = new Map();
 
@@ -178,13 +179,19 @@ io.on("connection", (socket) => {
 		activeRooms.includes(room) ? socket.join(room) : success = false
 		logger.debug("rooms" + activeRooms)
 		logger.debug("room:" + room)
-		callback({
-      		status: success,
-			voting: g.voteRunning,
-			ScreenState: g.ScreenState,
-			startURL:g.startURL,
-			endURL: g.endURL
-    	});
+		if (success) {
+			callback({
+	      			status: true,
+				voting: g.voteRunning,
+				ScreenState: g.ScreenState,
+				startURL:g.startURL,
+				endURL: g.endURL
+		    	});
+		}else {
+			callback({
+				status: false
+			})
+		}
 	})
 
 	

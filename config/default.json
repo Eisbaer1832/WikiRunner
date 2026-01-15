@@ -1,13 +1,14 @@
 {
 	"server": {
-	    	"host": "127.0.0.1:9876",
-	    	"port": 9876,
-			"proxyPort" : 9877,
-			"encrypted": false
+	    	"host": "127.0.0.1",
+	    	"port": 7660,
+		"socketPort" : 7661,
+		"proxyPort" : 7662,
+		"encrypted": false
 
 	},
 	"game": {
-		"hopTarget" : 1,
+		"hopTarget" : 4,
 		"blacklist": [".jpg", ".svg","Hilfe:","Datei:","ISBN","Kategorie", "Benutzer:", "Quelle", "Impressum", "Diskussion:", "#","Wikipedia:", "Spezial:"]
 	}
 }
