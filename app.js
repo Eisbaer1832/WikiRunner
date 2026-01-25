@@ -2,24 +2,20 @@ const express = require('express')
 const bodyParser = require('body-parser');
 const favicon = require('serve-favicon');
 const { Server } = require("socket.io");
-const $ = require('jquery');
 const axios = require('axios');
 const cheerio = require('cheerio');
 const app = express();
 const config = require('config');
-const fs = require('fs');
 const pino = require('pino');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const { log } = require('console');
-const { url } = require('inspector');
 
+const logLevel = config.get('server.logLevel').toString()
 const logger = pino({
-    level: 'debug',
+    level: logLevel,
     transport: {
         target: 'pino-pretty',
         options: {
             colorize: true,
-            minimumLevel: 'debug'
+            minimumLevel: logLevel
         }
     }
 })
@@ -141,7 +137,6 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
             linksClicked.push(result)
             g.serverClickedList = linksClicked
         })
-		logger.debug(linksClicked)
 		fetch(URL)
 			.then(res => res.text())
 			.then(html => {
@@ -194,7 +189,7 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 
 function getNextItems(room) {
 	let g = getGame(room)
-    logger.info(room + "is getting a new url")
+    logger.debug(room + " is getting a new url")
 	g.voteRunning = true
 	g.votePositiveCounter = 0
 	g.voteNegativeCounter = 0
@@ -218,8 +213,7 @@ function getNextItems(room) {
 io.on("connection", (socket) => {
 	socket.on("createLobby", (callback) => {
 		const roomCode = createRoom().toString()
-		logger.debug(roomCode)
-		activeRooms.push(roomCode)  	
+		activeRooms.push(roomCode)
 		games.set(roomCode, new Game())
 		socket.join(roomCode)
 		callback({
@@ -231,7 +225,6 @@ io.on("connection", (socket) => {
 		success = true
 		activeRooms.includes(room) ? socket.join(room) : success = false
 		logger.debug("rooms" + activeRooms)
-		logger.debug("room:" + room)
 		if (success) {
 			callback({
 	      			status: true,
