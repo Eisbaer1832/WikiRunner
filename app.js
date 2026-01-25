@@ -10,14 +10,18 @@ const config = require('config');
 const fs = require('fs');
 const pino = require('pino');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const { log } = require('console');
+const { url } = require('inspector');
 
 const logger = pino({
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true
+    level: 'debug',
+    transport: {
+        target: 'pino-pretty',
+        options: {
+            colorize: true,
+            minimumLevel: 'debug'
+        }
     }
-  }
 })
 
 // config
@@ -40,6 +44,7 @@ class Game {
 	finishedUsers = []
 	timeStamps = []
 	linksClickedList = []
+    serverClickedList = []
 	votePositiveCounter = 0
 	voteNegativeCounter = 0
 	userVoteList = []
@@ -83,6 +88,29 @@ function createRoom() {
 }
 
 
+async function fetchPageTitle(argURL) {
+    return new Promise((resolve, reject) => {
+        let title = argURL.split("/");
+        title = title[title.length - 1];
+
+        const URL = "https://api.wikimedia.org/core/v1/wikipedia/de/page/" + title;
+
+        fetch(URL)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                resolve(data.title); // Return the title when ready
+            })
+            .catch(err => {
+                console.error("Error fetching page title:", err);
+                reject(err);
+            });
+    });
+}
 function fetchRandomArticle(room) {
 	let g = getGame(room)
 	return new Promise((resolve, reject) => {
@@ -95,7 +123,6 @@ function fetchRandomArticle(room) {
 				return response.json();
 			})
 			.then(data => {
-				logger.debug(data)
 				g.startURL = data.content_urls.desktop.page
 				resolve(g.startURL)
 			})
@@ -106,12 +133,15 @@ function fetchRandomArticle(room) {
 	});
 }
 
-function fetchRelatedGoalArticle(room, URL) {
+function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 	let g = getGame(room)
 	return new Promise((resolve, reject) => {
 		let articles = [];
-		logger.trace("URL: " + URL);
-		
+        fetchPageTitle(URL).then(result =>{
+            linksClicked.push(result)
+            g.serverClickedList = linksClicked
+        })
+		logger.debug(linksClicked)
 		fetch(URL)
 			.then(res => res.text())
 			.then(html => {
@@ -144,7 +174,7 @@ function fetchRelatedGoalArticle(room, URL) {
 
 					if (g.hopCounter < maxHops) {
 						g.hopCounter++;
-						fetchRelatedGoalArticle(room, article).then(resolve).catch(reject);
+						fetchRelatedGoalArticle(room, article, linksClicked).then(resolve).catch(reject);
 					} else {
 						g.endURL = article;
 						resolve(g.endURL);
@@ -162,6 +192,28 @@ function fetchRelatedGoalArticle(room, URL) {
 }
 
 
+function getNextItems(room) {
+	let g = getGame(room)
+    logger.info(room + "is getting a new url")
+	g.voteRunning = true
+	g.votePositiveCounter = 0
+	g.voteNegativeCounter = 0
+	g.hopCounter = 0
+	io.to(room).emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
+	fetchRandomArticle(room)
+	.then(() => {
+		g.startURL = `${protocol}://${proxyUrl}/proxy?url=` + g.startURL
+		logger.debug("starting at: " + g.startURL)
+		fetchRelatedGoalArticle(room, g.startURL)
+		.then(() => {
+			logger.debug("Goal is: " + g.endURL + ". Managed to achieve a Hop count of " + g.hopCounter)
+			io.to(room).emit("reviewItems", g.endURL)
+		})
+	})
+	.catch(err => {
+		logger.fatal("Error starting game:", err);
+	});
+}
 
 io.on("connection", (socket) => {
 	socket.on("createLobby", (callback) => {
@@ -211,28 +263,6 @@ io.on("connection", (socket) => {
 		}	
 	})
 
-	function getNextItems(room) {
-		let g = getGame(room)
-		g.voteRunning = true
-		g.votePositiveCounter = 0
-		g.voteNegativeCounter = 0
-		g.hopCounter = 0
-		io.to(room).emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
-		fetchRandomArticle(room)
-		.then(() => {
-			g.startURL = `${protocol}://${proxyUrl}/proxy?url=` + g.startURL
-			logger.debug("starting at: " + g.startURL)
-			fetchRelatedGoalArticle(room, g.startURL)
-			.then(() => {
-				logger.debug("Goal is: " + g.endURL + ". Managed to achieve a Hop count of " + g.hopCounter)
-				io.to(room).emit("reviewItems", g.endURL)
-			})
-		})
-		.catch(err => {
-			logger.fatal("Error starting game:", err);
-		});
-		logger.debug(games)
-	}
 	socket.on("getNextItems", (room) => {
 		getNextItems(room)
 	})
@@ -268,15 +298,17 @@ io.on("connection", (socket) => {
 				g.hopCounter = 0
 				g.votePositiveCounter = 0
 				g.voteNegativeCounter = 0
+                updateScoreboardDB(room, "Musterlösung", g.serverClickedList, false)
+                g.serverClickedList = []
 				io.to(room).emit("starting", {"startURL": g.startURL, "endURL": g.endURL})
 				g.startTime = Date.now();
 				g.ScreenState = "running";
 				g.voteRunning = false;
+
 			}else if (g.voteNegativeCounter > needed) {
 				g.userVoteList = []
 				getNextItems(room)
-			}
-			else{
+			}else{
 				logger.info(`${g.votePositiveCounter} voted positive, ${needed - g.votePositiveCounter} more votes needed!`)
 			}
 		}
@@ -284,18 +316,15 @@ io.on("connection", (socket) => {
 });
 
 function updateScoreboardDB(room, user, linksClicked, success) {
-	console.log(room)
 	let g = getGame(room)
 	let alreadyFound = false
 	let ms = 0
 
-	console.log(g)
 	if (success) {
 		ms = (Date.now() - g.startTime)  / 1000;
 	}else{
 		ms = "DNF"
 	}
-	console.log(ms)
 	g.finishedUsers.forEach(function (item, index) {
 		if (item == user) {
 			g.linksClickedList[index] = linksClicked

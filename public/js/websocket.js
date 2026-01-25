@@ -1,4 +1,4 @@
-var socket = io("https://wikirunner.tbwebtech.de");
+var socket = io("127.0.0.1:7661");
 let room = 0
 socket.on("connect", () => {});
 
@@ -76,6 +76,7 @@ socket.on("voteRunning", (endURL) => {
 
 socket.on("updateVotingStats",({needed, positive, negative}) => {
 	console.log("updateVotingStats")
+    console.log(needed + " " + positive)
 	updatVotes(positive, negative, needed)
 });
 
@@ -98,6 +99,7 @@ function remoteFinished(linksClicked, success = true) {
 
 
 function getNextItems() {
+    console.log("Get next item " + room)
 	socket.emit("getNextItems", room)
 }
 
