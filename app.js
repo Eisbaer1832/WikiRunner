@@ -68,6 +68,7 @@ app.use('/public',express.static('public'));
 app.use(favicon(__dirname + '/public/assets/favicon.ico'));
 app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __dirname })});
 app.get('/admin', (_, res) => {res.sendFile('/public/html/admin.html', {root: __dirname })});
+app.get('/privacy', (_, res) => {res.sendFile('/public/html/privacy.html', {root: __dirname })});
 app.listen(port, () => {logger.info(`App listening on port ${port}!`)});
 logger.info("Protocol: " + protocol)
 logger.info("Host: " + host)
