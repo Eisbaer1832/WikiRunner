@@ -1,0 +1,60 @@
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    50% {
+        scale: 1.2 1.2;
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+body {
+    background-color: black;
+}
+
+h1, h2, h3, h4, p, a, ul, li {
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
+} 
+
+
+
+.header {
+    color: #ffffff;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10vw;
+    justify-content: center;
+    border-radius: 10px;
+    height: fit-content;
+    display: table;
+}
+
+.header h1 {
+    display: table-cell;
+}
+
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+#blob {
+    height: 30vmax;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    position: absolute;
+    filter: blur(20vmax);
+    translate: -50% -50%;
+    z-index: -1;
+    opacity: 0.8;
+    background: linear-gradient(270deg, rgba(121,9,95,1) 0%, rgba(4,125,197,1) 72%, rgba(0,212,255,1) 100%);
+    animation: rotate 40s infinite;
+}
+

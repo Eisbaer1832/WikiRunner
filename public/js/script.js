@@ -173,17 +173,29 @@ function voting(state, allreadyVoted = false) {
 function displayScores(names, times, linksClickedList) {
 	document.getElementById("statsInsert").innerHTML = ""
 	names.forEach((name, i) => {
-		$('#statsInsert').append("" +
-			"<a class='panel-block is-active'> " +
-    		"<span class='icon'><i class='fas fa-clock' aria-hidden='true'></i></span>" +
-				times[i] + " Sekunden" + 
-				" - " +
-    		"<span class='icon'><i class='fas fa-user' aria-hidden='true'></i></span>" +
-            	name  +
-			"<br>" +
-			"<span class='icon'><i class='fas fa-list' aria-hidden='true'></i></span>" +
-				linksClickedList[i] +
-        	"</a>");
+		let displayTime = "DNF"
+		if (times[i] !== "DNF") {
+			const seconds = times[i] % 60
+			const minutes = (times[i] - seconds) / 60
+			displayTime = minutes + ":"+ Math.round(seconds)
+		}
+
+		$('#statsInsert').append(`
+		<a class='panel-block is-active'> 
+		   <span class='stat-item' style="width: 10%">
+			   <span class='icon'><i class='fas fa-clock' aria-hidden='true'></i></span>
+			   ${displayTime}
+		   </span>
+		   <span class='stat-item' style="width: 24%">
+			   <span class='icon'><i class='fas fa-user' aria-hidden='true'></i></span>
+			   ${name}
+		   </span>
+		   <span class='stat-item' style="width: 70%">
+			   <span class='icon'><i class='fas fa-list' aria-hidden='true'></i></span>
+			   ${linksClickedList[i]}
+		   </span>
+		</a>
+	`);
 	});
 }
 
@@ -202,19 +214,19 @@ function main() {
 	});
 
 	window.addEventListener('storage', (event) => {
-		if (event.key == "URLtoCheck") {
+		if (event.key === "URLtoCheck") {
 			let url = localStorage.getItem(event.key)
 			let urlArray = url.split("/")
 			fetchPageTitle(urlArray[urlArray.length -1 ]).then( title => {
-				if (title != linksClicked[linksClicked.length - 1]) {
+				if (title !== linksClicked[linksClicked.length - 1]) {
 					linksClicked.push(title)
 				}
 			})
-			if (url == localStorage.getItem("target")) {
+			if (url === localStorage.getItem("target")) {
 				console.log("finished")
 				console.log(url)
 				fetchPageTitle(url).then(title => {
-					if (title != linksClicked[linksClicked.length - 1]) {
+					if (title !== linksClicked[linksClicked.length - 1]) {
 						linksClicked.push(title)
 					}
 					console.log(linksClicked)

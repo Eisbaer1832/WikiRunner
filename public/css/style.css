@@ -66,5 +66,7 @@
 @keyframes shimmer { to { background-position: 100% } }
 
 
-
-
+.stat-item {
+	display: inline-block;
+	text-align: left;
+}

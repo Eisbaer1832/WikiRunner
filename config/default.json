@@ -3,12 +3,12 @@
 	    	"host": "127.0.0.1",
 	    	"port": 7660,
 		"socketPort" : 7661,
-		"proxyUrl" : "wikirunner.tbwebtech.de",
-		"encrypted": true
-
+		"proxyUrl" : "127.0.0.1:7660",
+		"encrypted": false,
+		"logLevel": "debug"
 	},
 	"game": {
-		"hopTarget" : 0,
+		"hopTarget" : 1,
 		"blacklist": [".jpg", ".svg","Hilfe:","Datei:","ISBN","Kategorie", "Benutzer:", "Quelle", "Impressum", "Diskussion:", "#","Wikipedia:", "Spezial:"]
 	}
 }
