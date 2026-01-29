@@ -1,4 +1,4 @@
-var socket = io("127.0.0.1:7661");
+var socket = io("wikirunner.tbwebtech.de");
 let room = 0
 socket.on("connect", () => {});
 
@@ -81,7 +81,7 @@ socket.on("updateVotingStats",({needed, positive, negative}) => {
 });
 
 socket.on("closeGameOnClients", endURL => {
-	ScreenState("roomSelect")
+	ScreenState("lobby")
 	voting(false)
 });
 socket.on("finishNotification", (user, length) => {

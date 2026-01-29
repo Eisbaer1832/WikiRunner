@@ -28,7 +28,6 @@ const host = config.get('server.host');
 const protocol = (config.get("server.encrypted")) ? "https" : "http";
 let maxHops = config.get('game.hopTarget');
 
-
 const io = new Server(socketPort, { cors: { origin: '*', credentials: true }});
 activeRooms = []
 const games = new Map();
@@ -48,7 +47,6 @@ class Game {
 	startURL
 	endURL
 	constructor() {}
-
 }
 
 function getGame(room) {
@@ -143,7 +141,7 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 			.then(html => {
 				const $ = cheerio.load(html);
 				const element = $(".mw-page-container-inner").first();
-
+				
 				element.find('a').each((i, link) => {
 					const href = $(link).attr('href');
 					if (
@@ -161,6 +159,7 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 						if(isAllowed) {articles.push(href);}
 					}
 				});
+
 
 				if (articles.length > 0) {
 					const rand = Math.floor(Math.random() * articles.length);
@@ -190,7 +189,8 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 
 function getNextItems(room) {
 	let g = getGame(room)
-    logger.debug(room + " is getting a new url")
+	logger.debug(room + " is getting a new url")
+	logger.info(g)
 	g.voteRunning = true
 	g.votePositiveCounter = 0
 	g.voteNegativeCounter = 0
@@ -204,6 +204,7 @@ function getNextItems(room) {
 		.then(() => {
 			logger.debug("Goal is: " + g.endURL + ". Managed to achieve a Hop count of " + g.hopCounter)
 			io.to(room).emit("reviewItems", g.endURL)
+				
 		})
 	})
 	.catch(err => {
@@ -258,6 +259,7 @@ io.on("connection", (socket) => {
 	})
 
 	socket.on("getNextItems", (room) => {
+		let g = getGame(room)
 		getNextItems(room)
 	})
 
@@ -271,10 +273,15 @@ io.on("connection", (socket) => {
 		let g = getGame(room)
 		logger.info(user + " has finished")
 		updateScoreboardDB(room, user, linksClicked, success)
+		logger.info(room + " " + user + " " + linksClicked + " " + success)
 		io.to(room).emit("finishNotification", user, linksClicked.length)
 		io.to(room).emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
   	}); 
-
+	socket.on("getScoreboard", (room) => {
+		let g = getGame(room)
+		logger.info("getScore: " + g)
+		io.to(room).emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
+	})
 	socket.on("voteUseItem", (room, vote, username) => {
 		const needed = io.sockets.adapter.rooms.get(room).size / 2
 		let g = getGame(room)
@@ -319,6 +326,8 @@ function updateScoreboardDB(room, user, linksClicked, success) {
 	}else{
 		ms = "DNF"
 	}
+	logger.info(user + " " + success)
+	logger.info(g.finishedUsers)
 	g.finishedUsers.forEach(function (item, index) {
 		if (item == user) {
 			g.linksClickedList[index] = linksClicked
@@ -355,6 +364,8 @@ app.get('/proxy', async (req, res) => {
     });
 
 
+    //removing this for mobile
+	$(".p-lang-btn").first().remove()
     $('a').each(function () {
 		try {
 			let href = $(this).attr('href');
