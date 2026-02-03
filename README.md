@@ -1,10 +1,25 @@
-# WikiRunner
-A Multiplayer Wikipedia Speedrunner WebApp 
+<p align='center'>
+ <img src='https://github.com/Eisbaer1832/WikiRunnerAndroid/blob/607d6e493fef1547d644f52dceba4a2fc188e8b2/icon.png' width=150 />
+</p>
+<h1 align='center'>Wikirunner</h1>
+<p align='center'>A Wikipedia Speedrunning WebAppp build with VanillaJs, Bulma and NodeJs</p>
 
-It is primarily meant to be selfhosted, since it does not have a lobby system
+<div align='center'>
+  <img src='https://badgen.net/npm/node/express'/>
+  <img src='https://img.shields.io/badge/License-MIT-blue.svg'/>
+</div>
 
 
-TODO
-* Make history persistant
-* improve mobile view
-* add category management
+## ✨ Features
+* Random goal and start page registration
+* Per game link-click history
+* Play with friends
+
+## 📷 Screenshots
+<div align='center'>
+  <img src='/1.png'width=200/>
+  <img src='/2.png'width=200/>
+  <img src='/3.png'width=200/>
+  <img src='/4.png'width=200/>
+</div>
+
