@@ -7,6 +7,7 @@
 <div align='center'>
   <img src='https://badgen.net/npm/node/express'/>
   <img src='https://img.shields.io/badge/License-MIT-blue.svg'/>
+  <a href="https://wikirunner.tbwebtech.de/"> <img src="https://img.shields.io/badge/live-demo-blue"></a>
 </div>
 
 
@@ -15,11 +16,14 @@
 * Per game link-click history
 * Play with friends
 
+## Getting Started
+1. Setup dependencies with ```npm install ./```
+2. Setup your server details in config/default.json
+3. Start the server with ```node app.js```
+
 ## 📷 Screenshots
 <div align='center'>
-  <img src='/1.png'width=200/>
-  <img src='/2.png'width=200/>
-  <img src='/3.png'width=200/>
-  <img src='/4.png'width=200/>
+  <img src='/1.png'width=800/>
+  <img src='/2.png'width=800/>
 </div>
 
