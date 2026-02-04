@@ -195,6 +195,7 @@ function getNextItems(room) {
 	g.votePositiveCounter = 0
 	g.voteNegativeCounter = 0
 	g.hopCounter = 0
+	io.to(room).emit("gettingNewItems")
 	io.to(room).emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
 	fetchRandomArticle(room)
 	.then(() => {
