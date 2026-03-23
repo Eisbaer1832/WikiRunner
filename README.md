@@ -6,7 +6,7 @@
 
 <div align='center'>
   <img src='https://badgen.net/npm/node/express'/>
-  <img src='https://img.shields.io/badge/License-MIT-blue.svg'/>
+  <img src='https://img.shields.io/badge/License-GPLv3-blue.svg'/>
   <a href="https://wikirunner.tbwebtech.de/"> <img src="https://img.shields.io/badge/live-demo-blue"></a>
 </div>
 
