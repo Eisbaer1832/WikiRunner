@@ -7,6 +7,7 @@ const cheerio = require('cheerio');
 const app = express();
 const config = require('config');
 const pino = require('pino');
+const pinoHttp = require('pino-http');
 
 const logLevel = config.get('server.logLevel').toString()
 const logger = pino({
@@ -62,12 +63,26 @@ function getGame(room) {
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-
+app.use(pinoHttp({
+  logger, // Reuse existing logger
+  customLogLevel: (req, res, err) => {
+    if (res.statusCode >= 500) return 'error';
+    if (res.statusCode >= 400) return 'warn';
+    return 'info';
+  },
+  customProps: (req, res) => ({
+    correlationId: req.headers['x-correlation-id'] // Add custom context
+  })
+}));
+ 
 app.use('/public',express.static('public'));
 app.use(favicon(__dirname + '/public/assets/favicon.ico'));
 app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __dirname })});
 app.get('/admin', (_, res) => {res.sendFile('/public/html/admin.html', {root: __dirname })});
 app.get('/privacy', (_, res) => {res.sendFile('/public/html/privacy.html', {root: __dirname })});
+app.get('/robots.txt', (_, res) => {res.sendFile('/public/robots.txt', {root: __dirname })});
+
+
 app.listen(port, () => {logger.info(`App listening on port ${port}!`)});
 logger.info("Protocol: " + protocol)
 logger.info("Host: " + host)
@@ -89,7 +104,7 @@ async function fetchPageTitle(argURL) {
         title = title[title.length - 1];
 
         const URL = "https://api.wikimedia.org/core/v1/wikipedia/de/page/" + title;
-
+	logger.info(URL)
         fetch(URL)
             .then(response => {
                 if (!response.ok) {
@@ -118,7 +133,9 @@ function fetchRandomArticle(room) {
 				return response.json();
 			})
 			.then(data => {
+				logger.info(data)
 				g.startURL = data.content_urls.desktop.page
+				console.log(g.startURL)
 				resolve(g.startURL)
 			})
 			.catch(err => {
@@ -200,6 +217,7 @@ function getNextItems(room) {
 	fetchRandomArticle(room)
 	.then(() => {
 		g.startURL = `${protocol}://${proxyUrl}/proxy?url=` + g.startURL
+		console.log("start: " + g.startURL)
 		logger.debug("starting at: " + g.startURL)
 		fetchRelatedGoalArticle(room, g.startURL)
 		.then(() => {
