@@ -106,6 +106,7 @@ async function fetchPageTitle(game, argURL) {
         let title = argURL.split("/");
         title = title[title.length - 1];
 
+	logger.info("lang: " + game.language)
         const URL = "https://api.wikimedia.org/core/v1/wikipedia/" + game.language + "/page/" + title;
 
         fetch(URL)
@@ -167,7 +168,7 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 					if (
 						href &&
 						href.includes("/wiki/") &&
-						href.includes("wikipedia.org")
+						href.includes(g.language + ".wikipedia.org")
 					) {
 						const blacklist = config.get('game.blacklist');
 						let isAllowed = true;
@@ -235,14 +236,15 @@ function getNextItems(room) {
 }
 
 io.on("connection", (socket) => {
-	socket.on("createLobby", (callback, language = "de") => {
+	socket.on("createLobby", (language = "de", callback) => {
 		const roomCode = createRoom().toString()
 		activeRooms.push(roomCode)
+		logger.info(language)
 		games.set(roomCode, new Game(language))
 		socket.join(roomCode)
 		callback({
-      		room: roomCode
-    	});
+      			room: roomCode
+	    	});
 	})
 	socket.on("joinLobby", (room, callback) => {
 		let g = getGame(room)
@@ -367,6 +369,8 @@ function updateScoreboardDB(room, user, linksClicked, success) {
 // Main HTML Proxy
 app.get('/proxy', async (req, res) => {
   const targetUrl = req.query.url;
+  const language = targetUrl.replace("https://", "").substring(0,2)
+  logger.info(language)
   try {
    	const response = await axios.get(targetUrl, {
       headers: {
@@ -389,7 +393,7 @@ app.get('/proxy', async (req, res) => {
 		try {
 		let href = $(this).attr('href');
 		if (href.startsWith('/w')) {
-			href = "https://de.wikipedia.org" + href
+			href = "https://" + language + ".wikipedia.org" + href
 		}else if (href.startsWith('#')) {
 			href = targetUrl + href
 		}

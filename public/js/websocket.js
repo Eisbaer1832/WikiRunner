@@ -5,7 +5,7 @@ socket.on("connect", () => {});
 
 function createLobby() {
 	voting(false)
-	socket.emit("createLobby", (response) => {
+	socket.emit("createLobby", "de", (response) => {
 		room = response.room
 		ScreenState("lobby", room)
 		console.log("Joining room: " +  room)
