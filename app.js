@@ -44,9 +44,12 @@ class Game {
 	voteNegativeCounter = 0
 	userVoteList = []
 	hopCounter = 0
+	language = "de"
 	startURL
 	endURL
-	constructor() {}
+	constructor(language) {
+		this.language = language;
+	}
 }
 
 function getGame(room) {
@@ -83,12 +86,12 @@ function createRoom() {
 }
 
 
-async function fetchPageTitle(argURL) {
+async function fetchPageTitle(game, argURL) {
     return new Promise((resolve, reject) => {
         let title = argURL.split("/");
         title = title[title.length - 1];
 
-        const URL = "https://api.wikimedia.org/core/v1/wikipedia/de/page/" + title;
+        const URL = "https://api.wikimedia.org/core/v1/wikipedia/" + game.language + "/page/" + title;
 
         fetch(URL)
             .then(response => {
@@ -109,7 +112,7 @@ async function fetchPageTitle(argURL) {
 function fetchRandomArticle(room) {
 	let g = getGame(room)
 	return new Promise((resolve, reject) => {
-		const URL = "https://de.wikipedia.org/api/rest_v1/page/random/summary"
+		const URL = "https://" + g.language + ".wikipedia.org/api/rest_v1/page/random/summary"
 		fetch(URL)
 			.then(response => {
 				if (!response.ok) {
@@ -132,7 +135,7 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 	let g = getGame(room)
 	return new Promise((resolve, reject) => {
 		let articles = [];
-        fetchPageTitle(URL).then(result =>{
+        fetchPageTitle(g, URL).then(result =>{
             linksClicked.push(result)
             g.serverClickedList = linksClicked
         })
@@ -147,7 +150,7 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 					if (
 						href &&
 						href.includes("/wiki/") &&
-						href.includes("de.wikipedia.org")
+						href.includes("wikipedia.org")
 					) {
 						const blacklist = config.get('game.blacklist');
 						let isAllowed = true;
@@ -214,10 +217,10 @@ function getNextItems(room) {
 }
 
 io.on("connection", (socket) => {
-	socket.on("createLobby", (callback) => {
+	socket.on("createLobby", (callback, language = "de") => {
 		const roomCode = createRoom().toString()
 		activeRooms.push(roomCode)
-		games.set(roomCode, new Game())
+		games.set(roomCode, new Game(language))
 		socket.join(roomCode)
 		callback({
       		room: roomCode
@@ -253,7 +256,7 @@ io.on("connection", (socket) => {
 			io.emit("voteRunning", g.endURL)
 			io.emit("updateVotingStats", {"needed": io.sockets.adapter.rooms.get(room).size , "positive" : g.votePositiveCounter, "negative" : g.voteNegativeCounter})
 		}
-		if (ScreenState == "running") {
+		if (ScreenState === "running") {
 			io.emit("reconnecting", {"startURL": g.startURL, "endURL": g.endURL})
 			io.emit("updateScoreBoard", {"users": g.finishedUsers, "times" : g.timeStamps, "linksClickedList" : g.linksClickedList})
 		}	
@@ -347,7 +350,7 @@ function updateScoreboardDB(room, user, linksClicked, success) {
 app.get('/proxy', async (req, res) => {
   const targetUrl = req.query.url;
   try {
-   const response = await axios.get(targetUrl, {
+   	const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
       }
@@ -355,27 +358,24 @@ app.get('/proxy', async (req, res) => {
     const $ = cheerio.load(response.data);
     const baseUrl = new URL(targetUrl);
 
-
-    $('link[href], img[src]').each((_, el) => {
-      	const attr = el.name === 'link' ? 'href' : 'src';
-      	const original = $(el).attr(attr);
-		
+	$('link[href], img[src]').each((_, el) => {
+		const attr = el.name === 'link' ? 'href' : 'src';
+		const original = $(el).attr(attr);
 		const absolute = new URL(original, baseUrl).toString()
-		 $(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(absolute)}`);
-    });
+		$(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(absolute)}`);
+	});
 
 
-    //removing this for mobile
 	$(".p-lang-btn").first().remove()
-    $('a').each(function () {
+	$('a').each(function () {
 		try {
-			let href = $(this).attr('href');
-			if (href.startsWith('/w')) {
-	     		href = "https://de.wikipedia.org" + href
-			}else if (href.startsWith('#')) {
-				href = targetUrl + href
-			}
-			$(this).attr('href', `${protocol}://${proxyUrl}/proxy?url=` + href);
+		let href = $(this).attr('href');
+		if (href.startsWith('/w')) {
+			href = "https://de.wikipedia.org" + href
+		}else if (href.startsWith('#')) {
+			href = targetUrl + href
+		}
+		$(this).attr('href', `${protocol}://${proxyUrl}/proxy?url=` + href);
 		} catch (err) {
 			//console.log("Proxy rewrite failed for" + $(this) + " because " + err)
 		}
