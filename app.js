@@ -77,7 +77,6 @@ app.use(pinoHttp({
     correlationId: req.headers['x-correlation-id'] // Add custom context
   })
 }));
- 
 app.use('/public',express.static('public'));
 app.use(favicon(__dirname + '/public/assets/favicon.ico'));
 app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __dirname })});
@@ -100,29 +99,31 @@ function createRoom() {
   }
 }
 
+function fetchWithHeader(url) {
+	return fetch(url, {
+		headers: {
+			'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
+		}
+	})
+}
+
 
 async function fetchPageTitle(game, argURL) {
     return new Promise((resolve, reject) => {
         let title = argURL.split("/");
         title = title[title.length - 1];
 
-	logger.info("lang: " + game.language)
-        const URL = "https://api.wikimedia.org/core/v1/wikipedia/" + game.language + "/page/" + title;
+		const URL = "https://api.wikimedia.org/core/v1/wikipedia/" + game.language + "/page/" + title;
 
-        fetch(URL, {
-        	headers: {
-                	'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
-                        }
-                }
-	).then(response => {
-		logger.info(response)
+		fetchWithHeader(URL)
+			.then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
             .then(data => {
-                resolve(data.title); // Return the title when ready
+                resolve(data.title);
             })
             .catch(err => {
                 console.error("Error fetching page title:", err);
@@ -134,13 +135,7 @@ function fetchRandomArticle(room) {
 	let g = getGame(room)
 	return new Promise((resolve, reject) => {
 		const URL = "https://" + g.language + ".wikipedia.org/api/rest_v1/page/random/summary"
-		fetch(
-			URL, {
-				headers: {
-				        'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
-				}
-			}
-		)
+		fetchWithHeader(URL)
 			.then(response => {
 				if (!response.ok) {
 				throw new Error('Network response was not ok');
@@ -148,7 +143,6 @@ function fetchRandomArticle(room) {
 				return response.json();
 			})
 			.then(data => {
-				logger.info(data)
 				g.startURL = data.content_urls.desktop.page
 				console.log(g.startURL)
 				resolve(g.startURL)
@@ -382,7 +376,6 @@ function updateScoreboardDB(room, user, linksClicked, success) {
 app.get('/proxy', async (req, res) => {
   const targetUrl = req.query.url;
   const language = targetUrl.replace("https://", "").substring(0,2)
-  logger.info(language)
   try {
    	const response = await axios.get(targetUrl, {
       headers: {
