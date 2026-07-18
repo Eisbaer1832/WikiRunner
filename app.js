@@ -109,8 +109,13 @@ async function fetchPageTitle(game, argURL) {
 	logger.info("lang: " + game.language)
         const URL = "https://api.wikimedia.org/core/v1/wikipedia/" + game.language + "/page/" + title;
 
-        fetch(URL)
-            .then(response => {
+        fetch(URL, {
+        	headers: {
+                	'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
+                        }
+                }
+	).then(response => {
+		logger.info(response)
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
@@ -129,7 +134,13 @@ function fetchRandomArticle(room) {
 	let g = getGame(room)
 	return new Promise((resolve, reject) => {
 		const URL = "https://" + g.language + ".wikipedia.org/api/rest_v1/page/random/summary"
-		fetch(URL)
+		fetch(
+			URL, {
+				headers: {
+				        'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
+				}
+			}
+		)
 			.then(response => {
 				if (!response.ok) {
 				throw new Error('Network response was not ok');
@@ -143,8 +154,9 @@ function fetchRandomArticle(room) {
 				resolve(g.startURL)
 			})
 			.catch(err => {
-				logger.error("Error fetching random article:", err);
-				reject(err);
+			    logger.error(`Error fetching random article for ${g.language}: ${err.message}`);
+			    logger.error(err.stack);
+   			    reject(err);
 			});
 	});
 }
