@@ -66,17 +66,7 @@ function getGame(room) {
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-app.use(pinoHttp({
-  logger, // Reuse existing logger
-  customLogLevel: (req, res, err) => {
-    if (res.statusCode >= 500) return 'error';
-    if (res.statusCode >= 400) return 'warn';
-    return 'info';
-  },
-  customProps: (req, res) => ({
-    correlationId: req.headers['x-correlation-id'] // Add custom context
-  })
-}));
+
 app.use('/public',express.static('public'));
 app.use(favicon(__dirname + '/public/assets/favicon.ico'));
 app.get('/', (_, res) => {res.sendFile('/public/html/wikirunner.html', {root: __dirname })});
@@ -217,7 +207,6 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 function getNextItems(room) {
 	let g = getGame(room)
 	logger.debug(room + " is getting a new url")
-	logger.info(g)
 	g.voteRunning = true
 	g.votePositiveCounter = 0
 	g.voteNegativeCounter = 0
@@ -245,12 +234,11 @@ io.on("connection", (socket) => {
 	socket.on("createLobby", (language = "de", callback) => {
 		const roomCode = createRoom().toString()
 		activeRooms.push(roomCode)
-		logger.info(language)
 		games.set(roomCode, new Game(language))
 		socket.join(roomCode)
 		callback({
-      			room: roomCode
-	    	});
+			room: roomCode
+		});
 	})
 	socket.on("joinLobby", (room, callback) => {
 		let g = getGame(room)
@@ -348,6 +336,7 @@ io.on("connection", (socket) => {
 
 function updateScoreboardDB(room, user, linksClicked, success) {
 	let g = getGame(room)
+	if (g == null) {return}
 	let alreadyFound = false
 	let ms = 0
 
@@ -356,8 +345,6 @@ function updateScoreboardDB(room, user, linksClicked, success) {
 	}else{
 		ms = "DNF"
 	}
-	logger.info(user + " " + success)
-	logger.info(g.finishedUsers)
 	g.finishedUsers.forEach(function (item, index) {
 		if (item == user) {
 			g.linksClickedList[index] = linksClicked
@@ -374,44 +361,49 @@ function updateScoreboardDB(room, user, linksClicked, success) {
 
 // Main HTML Proxy
 app.get('/proxy', async (req, res) => {
-  const targetUrl = req.query.url;
-  const language = targetUrl.replace("https://", "").substring(0,2)
-  try {
-   	const response = await axios.get(targetUrl, {
-      headers: {
-        'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
-      }
-    });
-    const $ = cheerio.load(response.data);
-    const baseUrl = new URL(targetUrl);
+	const targetUrl = req.query.url;
+  	const language = targetUrl.replace("https://", "").substring(0,2)
+  	try {
+		const response = await axios.get(targetUrl, {
+      		headers: {
+        		'User-Agent': 'WikiRunner/1.0 (https://wikirunner.tbwebtech.de; admin@tbwebtech.de)',
+      		}
+    	});
+		const $ = cheerio.load(response.data);
+		const baseUrl = new URL(targetUrl);
 
-	$('link[href], img[src]').each((_, el) => {
-		const attr = el.name === 'link' ? 'href' : 'src';
-		const original = $(el).attr(attr);
-		const absolute = new URL(original, baseUrl).toString()
-		$(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(absolute)}`);
-	});
+		$('link[href], img[src]').each((_, el) => {
+			const attr = el.name === 'link' ? 'href' : 'src';
+			const original = $(el).attr(attr);
+			const absolute = new URL(original, baseUrl).toString()
+			$(el).attr(attr, `/proxy/resource?url=${encodeURIComponent(absolute)}`);
+		});
 
+		//remove components of the page, which could be abused in game
+		$(".vector-page-toolbar-container").first().remove()
+		$(".vector-header-container").first().remove()
+		$(".p-lang-btn").first().remove()
 
-	$(".p-lang-btn").first().remove()
-	$('a').each(function () {
-		try {
-		let href = $(this).attr('href');
-		if (href.startsWith('/w')) {
-			href = "https://" + language + ".wikipedia.org" + href
-		}else if (href.startsWith('#')) {
-			href = targetUrl + href
-		}
-		$(this).attr('href', `${protocol}://${proxyUrl}/proxy?url=` + href);
-		} catch (err) {
-			//console.log("Proxy rewrite failed for" + $(this) + " because " + err)
-		}
-	})
-
-    res.send($.html());
-  } catch (err) {
-    res.status(500).send('Och nee, der Proxy ist doof' + err);
-  }
+		// fix hrefs to reflect use of proxy
+		$('a').each(function () {
+			try {
+				let href = $(this).attr('href');
+				if (href.startsWith('/w')) {
+					href = "https://" + language + ".wikipedia.org" + href
+				}else if (href.startsWith('#')) {
+					href = targetUrl + href
+				}else if (href.startsWith('//')) {
+					href = "https:" + href
+				}
+				$(this).attr('href', `${protocol}://${proxyUrl}/proxy?url=` + href);
+			} catch (err) {
+				//console.log("Proxy rewrite failed for" + $(this) + " because " + err)
+			}
+		})
+		res.send($.html());
+	} catch (err) {
+    	res.status(500).send('Och nee, der Proxy ist doof' + err);
+  	}
 });
 // Asset Proxy (CSS, JS, images)
 app.get('/proxy/resource', async (req, res) => {
