@@ -108,7 +108,7 @@ async function fetchPageTitle(game, argURL) {
 		fetchWithHeader(URL)
 			.then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                	console.log('Network response was not ok' + response.body);
                 }
                 return response.json();
             })
@@ -206,6 +206,8 @@ function fetchRelatedGoalArticle(room, URL, linksClicked = []) {
 
 function getNextItems(room) {
 	let g = getGame(room)
+	if (g == undefined) return
+
 	logger.debug(room + " is getting a new url")
 	g.voteRunning = true
 	g.votePositiveCounter = 0
